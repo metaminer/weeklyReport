@@ -88,12 +88,12 @@
         <!-- 컬럼 헤더 -->
         <div class="grid grid-cols-2 divide-x sep border-x border-b border-white/10">
           <div class="grid divide-x sep" style="grid-template-columns: 150px 1fr;">
-            <div class="px-4 py-2 text-xs font-medium text-[#8b93ac]">일자</div>
-            <div class="px-4 py-2 text-xs font-medium text-[#8b93ac]">내용</div>
+            <div class="px-4 py-2 text-xs font-medium text-[#8b93ac] text-center">일자</div>
+            <div class="px-4 py-2 text-xs font-medium text-[#8b93ac] text-center">내용</div>
           </div>
           <div class="grid divide-x sep" style="grid-template-columns: 150px 1fr;">
-            <div class="px-4 py-2 text-xs font-medium text-[#8b93ac]">일자</div>
-            <div class="px-4 py-2 text-xs font-medium text-[#8b93ac]">내용</div>
+            <div class="px-4 py-2 text-xs font-medium text-[#8b93ac] text-center">일자</div>
+            <div class="px-4 py-2 text-xs font-medium text-[#8b93ac] text-center">내용</div>
           </div>
         </div>
         <!-- 바디 -->
@@ -139,6 +139,10 @@
   function weekRange(monday) {
     const fri = addDays(monday, 4);
     return `${toYMD(monday)}(${DAY_KR[monday.getDay()]}) ~ ${toYMD(fri)}(${DAY_KR[fri.getDay()]})`;
+  }
+
+  function escHtml(s) {
+    return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
   let viewMonday = getMonday();
@@ -234,7 +238,7 @@
       el.innerHTML = items.map(p => `
         <div class="grid divide-x sep" style="grid-template-columns: 150px 1fr;">
           <div class="px-4 py-2.5 text-sm text-[#8b93ac] whitespace-nowrap">${toKR(p.plan_date)}</div>
-          <div class="px-4 py-2.5 text-sm text-white/70">${p.content || '-'}</div>
+          <div class="px-4 py-2.5 text-sm text-white/70 whitespace-pre-wrap">${escHtml(p.content) || '-'}</div>
         </div>`).join('');
     };
 
