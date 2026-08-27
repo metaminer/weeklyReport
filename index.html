@@ -302,7 +302,16 @@
     }
 
     document.getElementById('savedAt').textContent = `마지막 저장: ${formatDT(now)}`;
+    showToast('저장되었습니다 ✓');
     btn.textContent = '저장'; btn.disabled = false;
+  }
+
+  function showToast(msg) {
+    const t = document.createElement('div');
+    t.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 bg-[#7c6cf7] text-white text-sm font-semibold px-6 py-3 rounded-2xl shadow-lg shadow-indigo-900/40 z-50 transition-opacity duration-300';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2000);
   }
 
   document.getElementById('saveBtn').addEventListener('click', saveReport);
