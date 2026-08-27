@@ -46,22 +46,22 @@
 <main class="max-w-5xl mx-auto px-4 py-6 space-y-4">
 
   <!-- 헤더 -->
-  <header class="flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7c6cf7] to-[#4f7cf7] flex items-center justify-center text-2xl shadow-lg shadow-indigo-900/40">👥</div>
-      <div>
-        <h1 class="text-xl font-bold leading-tight">팀 보고서</h1>
-        <p class="text-sm text-[#8b93ac] leading-tight" id="weekLabel">-</p>
+  <header class="flex items-center justify-between gap-2">
+    <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+      <div class="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-[#7c6cf7] to-[#4f7cf7] flex items-center justify-center text-xl sm:text-2xl shadow-lg shadow-indigo-900/40 flex-shrink-0">👥</div>
+      <div class="min-w-0">
+        <h1 class="text-lg sm:text-xl font-bold leading-tight">팀 보고서</h1>
+        <p class="text-sm text-[#8b93ac] leading-tight truncate" id="weekLabel">-</p>
       </div>
     </div>
-    <div class="flex items-center gap-2">
-      <a href="index.html" class="w-11 h-11 rounded-full card flex items-center justify-center hover:bg-white/5 transition" title="내 보고서">
+    <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+      <a href="index.html" class="w-9 h-9 sm:w-11 sm:h-11 rounded-full card flex items-center justify-center hover:bg-white/5 transition" title="내 보고서">
         <svg class="w-5 h-5 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
       </a>
-      <a id="adminLink" href="admin.html" class="hidden w-11 h-11 rounded-full card flex items-center justify-center hover:bg-white/5 transition" title="관리자">
+      <a id="adminLink" href="admin.html" class="hidden w-9 h-9 sm:w-11 sm:h-11 rounded-full card flex items-center justify-center hover:bg-white/5 transition" title="관리자">
         <svg class="w-5 h-5 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
       </a>
-      <button id="logoutBtn" class="w-11 h-11 rounded-full card flex items-center justify-center hover:bg-white/5 transition" title="로그아웃">
+      <button id="logoutBtn" class="w-9 h-9 sm:w-11 sm:h-11 rounded-full card flex items-center justify-center hover:bg-white/5 transition" title="로그아웃">
         <svg class="w-5 h-5 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
       </button>
     </div>
@@ -90,7 +90,7 @@
 
 <!-- 보고서 상세 모달 -->
 <div id="modal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden p-4">
-  <div id="modalBox" class="card rounded-3xl shadow-2xl overflow-hidden flex flex-col" style="width:900px;height:80vh;max-width:calc(100vw - 2rem);max-height:calc(100vh - 2rem);min-width:480px;min-height:300px;position:relative;">
+  <div id="modalBox" class="card rounded-3xl shadow-2xl overflow-hidden flex flex-col" style="width:900px;height:80vh;max-width:calc(100vw - 2rem);max-height:calc(100vh - 2rem);min-width:min(480px, calc(100vw - 2rem));min-height:300px;position:relative;">
     <!-- 리사이즈 핸들 -->
     <div class="rz rz-n"></div><div class="rz rz-s"></div><div class="rz rz-e"></div><div class="rz rz-w"></div>
     <div class="rz rz-ne"></div><div class="rz rz-nw"></div><div class="rz rz-se"></div><div class="rz rz-sw"></div>
@@ -104,10 +104,10 @@
         <svg class="w-4 h-4 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
-    <div class="p-6 overflow-auto flex-1">
-      <div class="min-w-[600px]">
+    <div class="p-4 sm:p-6 overflow-auto flex-1">
+      <div>
         <!-- 주차 헤더 -->
-        <div class="grid grid-cols-2 divide-x sep border border-white/10 rounded-t-2xl overflow-hidden">
+        <div class="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x sep border border-white/10 rounded-t-2xl overflow-hidden">
           <div class="bg-white/3 px-4 py-3 text-center">
             <div class="text-xs text-[#8b93ac] mb-0.5">금주 실적</div>
             <div class="text-xs font-semibold" id="modalThisRange">-</div>
@@ -118,18 +118,18 @@
           </div>
         </div>
         <!-- 컬럼 헤더 -->
-        <div class="grid grid-cols-2 divide-x sep border-x border-b border-white/10">
-          <div class="grid divide-x sep" style="grid-template-columns: 150px 1fr;">
-            <div class="px-4 py-2 text-xs font-medium text-[#8b93ac] text-center">일자</div>
-            <div class="px-4 py-2 text-xs font-medium text-[#8b93ac] text-center">내용</div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x sep border-x border-b border-white/10">
+          <div class="grid grid-cols-[80px_1fr] sm:grid-cols-[150px_1fr] divide-x sep">
+            <div class="px-2 sm:px-4 py-2 text-xs font-medium text-[#8b93ac] text-center">일자</div>
+            <div class="px-2 sm:px-4 py-2 text-xs font-medium text-[#8b93ac] text-center">내용</div>
           </div>
-          <div class="grid divide-x sep" style="grid-template-columns: 150px 1fr;">
-            <div class="px-4 py-2 text-xs font-medium text-[#8b93ac] text-center">일자</div>
-            <div class="px-4 py-2 text-xs font-medium text-[#8b93ac] text-center">내용</div>
+          <div class="grid grid-cols-[80px_1fr] sm:grid-cols-[150px_1fr] divide-x sep">
+            <div class="px-2 sm:px-4 py-2 text-xs font-medium text-[#8b93ac] text-center">일자</div>
+            <div class="px-2 sm:px-4 py-2 text-xs font-medium text-[#8b93ac] text-center">내용</div>
           </div>
         </div>
         <!-- 바디 -->
-        <div class="grid grid-cols-2 divide-x sep border-x border-b border-white/10 rounded-b-2xl overflow-hidden min-h-[80px]">
+        <div class="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x sep border-x border-b border-white/10 rounded-b-2xl overflow-hidden min-h-[80px]">
           <div id="modalThisWeek" class="divide-y sep"></div>
           <div id="modalNextWeek" class="divide-y sep"></div>
         </div>
@@ -274,9 +274,9 @@
         return;
       }
       el.innerHTML = items.map(p => `
-        <div class="grid divide-x sep" style="grid-template-columns: 150px 1fr;">
-          <div class="px-4 py-2.5 text-sm text-[#8b93ac] whitespace-nowrap">${toKR(p.plan_date)}</div>
-          <div class="px-4 py-2.5 text-sm text-white/80 md-body">${renderMd(p.content)}</div>
+        <div class="grid grid-cols-[80px_1fr] sm:grid-cols-[150px_1fr] divide-x sep">
+          <div class="px-2 sm:px-4 py-2.5 text-sm text-[#8b93ac] whitespace-nowrap">${toKR(p.plan_date)}</div>
+          <div class="px-2 sm:px-4 py-2.5 text-sm text-white/80 md-body break-words">${renderMd(p.content)}</div>
         </div>`).join('');
     };
 
