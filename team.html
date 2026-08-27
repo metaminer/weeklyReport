@@ -324,54 +324,70 @@
     document.getElementById('modal').classList.add('hidden');
   }
 
+  // 엑셀 시트 이름 제약(31자, \/?*[]: 금지) 처리 + 중복 이름 구분
+  function makeSheetName(name, usedNames) {
+    let base = (name || '이름없음').replace(/[\\/?*\[\]:]/g, '').slice(0, 31) || '이름없음';
+    let candidate = base;
+    let n = 2;
+    while (usedNames.has(candidate)) {
+      const suffix = `(${n})`;
+      candidate = base.slice(0, 31 - suffix.length) + suffix;
+      n++;
+    }
+    usedNames.add(candidate);
+    return candidate;
+  }
+
+  function memberRows(m) {
+    const thisReport = cachedReports.find(r => r.user_id === m.id && r.week_start === cachedMondayStr);
+    const lastReport = cachedReports.find(r => r.user_id === m.id && r.week_start === cachedLastMondayStr);
+
+    const thisPlans = (lastReport?.report_plans || []).sort((a, b) => a.sort_order - b.sort_order); // 금주 실적
+    const nextPlans = (thisReport?.report_plans || []).sort((a, b) => a.sort_order - b.sort_order); // 차주 계획
+
+    const rows = [];
+    thisPlans.forEach(p => {
+      const modified = p.actual_content != null && p.actual_content.trim() !== (p.content || '').trim();
+      rows.push({
+        '구분': '금주 실적',
+        '일자': p.plan_date || '',
+        '요일': p.plan_date ? DAY_KR[new Date(p.plan_date + 'T00:00:00').getDay()] : '',
+        '내용': (modified ? p.actual_content : p.content) || '',
+        '수정여부': modified ? '수정됨' : '',
+        '원래계획': modified ? (p.content || '') : '',
+      });
+    });
+    nextPlans.forEach(p => {
+      rows.push({
+        '구분': '차주 계획',
+        '일자': p.plan_date || '',
+        '요일': p.plan_date ? DAY_KR[new Date(p.plan_date + 'T00:00:00').getDay()] : '',
+        '내용': p.content || '',
+        '수정여부': '',
+        '원래계획': '',
+      });
+    });
+    if (!rows.length) {
+      rows.push({ '구분': '-', '일자': '', '요일': '', '내용': '(작성 없음)', '수정여부': '', '원래계획': '' });
+    }
+    return rows;
+  }
+
   function exportExcel() {
     if (!cachedMembers.length) {
       alert('내보낼 팀원 데이터가 없습니다.');
       return;
     }
 
-    const rows = [];
+    const wb = XLSX.utils.book_new();
+    const usedNames = new Set();
+
     for (const m of cachedMembers) {
-      const thisReport = cachedReports.find(r => r.user_id === m.id && r.week_start === cachedMondayStr);
-      const lastReport = cachedReports.find(r => r.user_id === m.id && r.week_start === cachedLastMondayStr);
-
-      const thisPlans = (lastReport?.report_plans || []).sort((a, b) => a.sort_order - b.sort_order); // 금주 실적
-      const nextPlans = (thisReport?.report_plans || []).sort((a, b) => a.sort_order - b.sort_order); // 차주 계획
-
-      thisPlans.forEach(p => {
-        const modified = p.actual_content != null && p.actual_content.trim() !== (p.content || '').trim();
-        rows.push({
-          '이름': m.name,
-          '구분': '금주 실적',
-          '일자': p.plan_date || '',
-          '요일': p.plan_date ? DAY_KR[new Date(p.plan_date + 'T00:00:00').getDay()] : '',
-          '내용': (modified ? p.actual_content : p.content) || '',
-          '수정여부': modified ? '수정됨' : '',
-          '원래계획': modified ? (p.content || '') : '',
-        });
-      });
-
-      nextPlans.forEach(p => {
-        rows.push({
-          '이름': m.name,
-          '구분': '차주 계획',
-          '일자': p.plan_date || '',
-          '요일': p.plan_date ? DAY_KR[new Date(p.plan_date + 'T00:00:00').getDay()] : '',
-          '내용': p.content || '',
-          '수정여부': '',
-          '원래계획': '',
-        });
-      });
-
-      if (!thisPlans.length && !nextPlans.length) {
-        rows.push({ '이름': m.name, '구분': '-', '일자': '', '요일': '', '내용': '(작성 없음)', '수정여부': '', '원래계획': '' });
-      }
+      const ws = XLSX.utils.json_to_sheet(memberRows(m));
+      ws['!cols'] = [{ wch: 10 }, { wch: 12 }, { wch: 6 }, { wch: 60 }, { wch: 8 }, { wch: 60 }];
+      XLSX.utils.book_append_sheet(wb, ws, makeSheetName(m.name, usedNames));
     }
 
-    const ws = XLSX.utils.json_to_sheet(rows);
-    ws['!cols'] = [{ wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 6 }, { wch: 50 }, { wch: 8 }, { wch: 50 }];
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, '팀 주간보고');
     XLSX.writeFile(wb, `팀주간보고_${cachedMondayStr}.xlsx`);
   }
 
