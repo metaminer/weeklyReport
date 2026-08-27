@@ -30,8 +30,17 @@
     .md-body a { color: #9d8ffb; }
     .md-body hr { border-color: rgba(255,255,255,0.06); }
     .md-body strong { font-weight: 700; }
-    input[type="date"] { color-scheme: dark; -webkit-appearance: none; appearance: none; }
-    input[type="date"]::-webkit-calendar-picker-indicator { display: none; opacity: 0; width: 0; height: 0; }
+    input[type="date"] { color-scheme: dark; -webkit-appearance: none !important; appearance: none !important; }
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      display: none !important;
+      -webkit-appearance: none !important;
+      background: none !important;
+      opacity: 0 !important;
+      width: 0 !important;
+      height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
     textarea { line-height: 1.5; min-height: calc(1.5em * 4 + 1rem); resize: none; overflow: hidden; }
   </style>
 </head>
