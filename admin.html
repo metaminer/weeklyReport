@@ -12,6 +12,17 @@
     .card { background: #12142a; border: 1px solid rgba(255,255,255,0.06); }
     .sep { border-color: rgba(255,255,255,0.06); }
     select { color-scheme: dark; }
+    input[type="date"] { color-scheme: dark; -webkit-appearance: none !important; appearance: none !important; }
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      display: none !important;
+      -webkit-appearance: none !important;
+      background: none !important;
+      opacity: 0 !important;
+      width: 0 !important;
+      height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
   </style>
 </head>
 <body class="min-h-screen text-white">
@@ -81,6 +92,35 @@
       class="w-full py-3 text-sm font-semibold bg-gradient-to-br from-[#7c6cf7] to-[#4f7cf7] text-white rounded-xl hover:opacity-90 active:scale-95 transition">
       저장
     </button>
+  </div>
+
+  <!-- 과거 데이터 정리 -->
+  <div class="card rounded-2xl px-5 py-5 space-y-4">
+    <h2 class="text-sm font-bold">과거 데이터 정리</h2>
+    <p class="text-xs text-[#8b93ac]">선택한 주차보다 이전 주간보고(실적/계획)를 모두 삭제합니다. 선택한 주차는 삭제되지 않습니다. <span class="text-[#fb7185]">삭제 후에는 복구할 수 없습니다.</span></p>
+
+    <div>
+      <label class="block text-sm font-medium text-[#8b93ac] mb-2">기준 주차 (이 주차의 이전 데이터를 삭제)</label>
+      <input type="date" id="cleanupDate"
+        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#7c6cf7]/50 focus:bg-white/10 transition">
+      <p id="cleanupWeekLabel" class="text-xs text-[#8b93ac] mt-1"></p>
+    </div>
+
+    <button id="cleanupPreviewBtn"
+      class="w-full py-2.5 text-sm font-semibold bg-white/5 hover:bg-white/10 text-white rounded-xl transition">
+      조회
+    </button>
+
+    <div id="cleanupPreview" class="hidden space-y-3">
+      <p id="cleanupPreviewText" class="text-sm text-white/80"></p>
+      <button id="cleanupDeleteBtn"
+        class="w-full py-3 text-sm font-semibold bg-[#fb7185] hover:opacity-90 active:scale-95 text-white rounded-xl transition">
+        삭제
+      </button>
+    </div>
+
+    <p id="cleanupError" class="text-xs text-[#fb7185] hidden"></p>
+    <p id="cleanupResult" class="text-xs text-[#8b93ac]"></p>
   </div>
 
 </main>
@@ -179,6 +219,108 @@
       await loadSettings();
     }
     btn.textContent = '저장'; btn.disabled = false;
+  });
+
+  // 과거 데이터 정리
+  function getMonday(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+  function toYMD(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  let cleanupBeforeWeek = null;
+
+  function resetCleanupPreview() {
+    cleanupBeforeWeek = null;
+    document.getElementById('cleanupPreview').classList.add('hidden');
+    document.getElementById('cleanupResult').textContent = '';
+  }
+
+  document.getElementById('cleanupDate').addEventListener('change', () => {
+    const val = document.getElementById('cleanupDate').value;
+    const label = document.getElementById('cleanupWeekLabel');
+    resetCleanupPreview();
+    if (!val) { label.textContent = ''; return; }
+    const monday = getMonday(new Date(val + 'T00:00:00'));
+    label.textContent = `선택한 주차: ${toYMD(monday)}(월) 시작 — 이 날짜 이전 데이터만 삭제됩니다.`;
+  });
+
+  document.getElementById('cleanupPreviewBtn').addEventListener('click', async () => {
+    const err = document.getElementById('cleanupError');
+    err.classList.add('hidden');
+    resetCleanupPreview();
+
+    const val = document.getElementById('cleanupDate').value;
+    if (!val) {
+      err.textContent = '기준 주차를 먼저 선택하세요.';
+      err.classList.remove('hidden');
+      return;
+    }
+
+    const monday = getMonday(new Date(val + 'T00:00:00'));
+    const mondayStr = toYMD(monday);
+    cleanupBeforeWeek = mondayStr;
+
+    const { data, error, count } = await sb
+      .from('reports')
+      .select('id, report_plans(id)', { count: 'exact' })
+      .lt('week_start', mondayStr);
+
+    if (error) {
+      err.textContent = '조회 실패: ' + error.message;
+      err.classList.remove('hidden');
+      return;
+    }
+
+    const reportCount = count ?? (data?.length || 0);
+    const planCount = (data || []).reduce((sum, r) => sum + (r.report_plans?.length || 0), 0);
+
+    const previewText = document.getElementById('cleanupPreviewText');
+    if (!reportCount) {
+      previewText.textContent = `${mondayStr}(월) 이전에 삭제할 데이터가 없습니다.`;
+      document.getElementById('cleanupPreview').classList.remove('hidden');
+      document.getElementById('cleanupDeleteBtn').classList.add('hidden');
+    } else {
+      previewText.textContent = `${mondayStr}(월) 이전 보고서 ${reportCount}건 (계획/실적 항목 ${planCount}개)이 삭제 대상입니다.`;
+      document.getElementById('cleanupDeleteBtn').classList.remove('hidden');
+      document.getElementById('cleanupPreview').classList.remove('hidden');
+    }
+  });
+
+  document.getElementById('cleanupDeleteBtn').addEventListener('click', async () => {
+    if (!cleanupBeforeWeek) return;
+    const confirmed = confirm(`${cleanupBeforeWeek}(월) 이전 주간보고를 모두 삭제합니다.\n삭제한 데이터는 복구할 수 없습니다. 계속할까요?`);
+    if (!confirmed) return;
+
+    const btn = document.getElementById('cleanupDeleteBtn');
+    const err = document.getElementById('cleanupError');
+    btn.textContent = '삭제 중...'; btn.disabled = true;
+    err.classList.add('hidden');
+
+    const { error, count } = await sb
+      .from('reports')
+      .delete({ count: 'exact' })
+      .lt('week_start', cleanupBeforeWeek);
+
+    btn.textContent = '삭제'; btn.disabled = false;
+
+    if (error) {
+      err.textContent = '삭제 실패: ' + error.message;
+      err.classList.remove('hidden');
+      return;
+    }
+
+    document.getElementById('cleanupResult').textContent = `삭제 완료: 보고서 ${count ?? 0}건 (${formatDT(new Date().toISOString())})`;
+    document.getElementById('cleanupPreview').classList.add('hidden');
+    cleanupBeforeWeek = null;
   });
 
   async function loadUsers() {

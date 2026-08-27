@@ -103,6 +103,12 @@ CREATE POLICY "reports_insert" ON reports
 CREATE POLICY "reports_update" ON reports
   FOR UPDATE USING (auth.uid() = user_id);
 
+-- reports: admin은 과거 데이터 정리를 위해 삭제 가능 (report_plans는 ON DELETE CASCADE로 함께 삭제됨)
+CREATE POLICY "reports_delete_admin" ON reports
+  FOR DELETE USING (
+    (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
+  );
+
 -- report_plans: 해당 report의 owner 또는 manager/admin
 CREATE POLICY "plans_select" ON report_plans
   FOR SELECT USING (
