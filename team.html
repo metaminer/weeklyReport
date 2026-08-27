@@ -31,6 +31,15 @@
     .md-body hr { border-color: rgba(255,255,255,0.06); }
     .md-body strong { font-weight: 700; }
     input[type="date"] { color-scheme: dark; }
+    .rz { position: absolute; z-index: 20; }
+    .rz-n  { top:-4px;    left:12px;  right:12px; height:8px;  cursor:n-resize; }
+    .rz-s  { bottom:-4px; left:12px;  right:12px; height:8px;  cursor:s-resize; }
+    .rz-e  { right:-4px;  top:12px;   bottom:12px;width:8px;   cursor:e-resize; }
+    .rz-w  { left:-4px;   top:12px;   bottom:12px;width:8px;   cursor:w-resize; }
+    .rz-ne { top:-4px;    right:-4px; width:12px; height:12px; cursor:ne-resize; }
+    .rz-nw { top:-4px;    left:-4px;  width:12px; height:12px; cursor:nw-resize; }
+    .rz-se { bottom:-4px; right:-4px; width:12px; height:12px; cursor:se-resize; }
+    .rz-sw { bottom:-4px; left:-4px;  width:12px; height:12px; cursor:sw-resize; }
   </style>
 </head>
 <body class="min-h-screen text-white">
@@ -81,8 +90,12 @@
 
 <!-- 보고서 상세 모달 -->
 <div id="modal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden p-4">
-  <div class="card rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
-    <div class="flex items-center justify-between px-6 py-5 border-b sep sticky top-0 card">
+  <div id="modalBox" class="card rounded-3xl shadow-2xl overflow-hidden flex flex-col" style="width:900px;height:80vh;max-width:calc(100vw - 2rem);max-height:calc(100vh - 2rem);min-width:480px;min-height:300px;position:relative;">
+    <!-- 리사이즈 핸들 -->
+    <div class="rz rz-n"></div><div class="rz rz-s"></div><div class="rz rz-e"></div><div class="rz rz-w"></div>
+    <div class="rz rz-ne"></div><div class="rz rz-nw"></div><div class="rz rz-se"></div><div class="rz rz-sw"></div>
+
+    <div class="flex items-center justify-between px-6 py-5 border-b sep flex-shrink-0 card">
       <div>
         <h3 id="modalName" class="text-base font-bold"></h3>
         <p id="modalSavedAt" class="text-xs text-[#8b93ac] mt-0.5"></p>
@@ -91,7 +104,7 @@
         <svg class="w-4 h-4 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
-    <div class="p-6 overflow-x-auto">
+    <div class="p-6 overflow-auto flex-1">
       <div class="min-w-[600px]">
         <!-- 주차 헤더 -->
         <div class="grid grid-cols-2 divide-x sep border border-white/10 rounded-t-2xl overflow-hidden">
@@ -293,6 +306,37 @@
   });
 
   init();
+
+  // 모달 리사이즈
+  (function() {
+    const box = document.getElementById('modalBox');
+    let dir = null, sx, sy, sw, sh;
+
+    box.querySelectorAll('.rz').forEach(handle => {
+      handle.addEventListener('mousedown', e => {
+        e.preventDefault();
+        dir = [...handle.classList].find(c => c.startsWith('rz-') && c !== 'rz').replace('rz-', '');
+        sx = e.clientX; sy = e.clientY;
+        sw = box.offsetWidth; sh = box.offsetHeight;
+        document.body.style.userSelect = 'none';
+      });
+    });
+
+    document.addEventListener('mousemove', e => {
+      if (!dir) return;
+      const dx = e.clientX - sx, dy = e.clientY - sy;
+      const minW = 480, minH = 300;
+      if (dir.includes('e')) box.style.width  = Math.max(minW, sw + dx) + 'px';
+      if (dir.includes('s')) box.style.height = Math.max(minH, sh + dy) + 'px';
+      if (dir.includes('w')) box.style.width  = Math.max(minW, sw - dx) + 'px';
+      if (dir.includes('n')) box.style.height = Math.max(minH, sh - dy) + 'px';
+    });
+
+    document.addEventListener('mouseup', () => {
+      dir = null;
+      document.body.style.userSelect = '';
+    });
+  })();
 </script>
 </body>
 </html>
