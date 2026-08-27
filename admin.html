@@ -166,11 +166,14 @@
   const ROLE_LABEL = { member: '팀원', manager: '관리자', admin: '시스템관리자' };
   const ROLE_COLOR = { member: 'text-[#8b93ac] bg-white/5', manager: 'text-[#7c6cf7] bg-[#7c6cf7]/10', admin: 'text-[#fb7185] bg-[#fb7185]/10' };
 
+  let currentUserId = null;
+
   async function init() {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) { window.location.href = 'login.html'; return; }
     const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
     if (!profile || profile.role !== 'admin') { window.location.href = 'index.html'; return; }
+    currentUserId = session.user.id;
     loadUsers();
     loadSettings();
   }
@@ -348,8 +351,25 @@
             class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/5 transition text-[#8b93ac] hover:text-white">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
           </button>
+          ${u.id !== currentUserId ? `
+          <button onclick='deleteUser(${JSON.stringify(u.id)}, ${JSON.stringify(u.name)})'
+            class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#fb7185]/10 transition text-[#8b93ac] hover:text-[#fb7185]" title="사용자 삭제">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16"/></svg>
+          </button>` : ''}
         </div>
       </div>`).join('');
+  }
+
+  async function deleteUser(userId, name) {
+    const confirmed = confirm(`'${name}' 계정을 삭제합니다.\n로그인 계정과 그동안 작성한 모든 주간보고(실적/계획)가 함께 영구 삭제되며, 복구할 수 없습니다.\n계속할까요?`);
+    if (!confirmed) return;
+
+    const { data, error } = await sb.functions.invoke('delete-user', { body: { userId } });
+    if (error || data?.error) {
+      alert('삭제 실패: ' + (data?.error || error.message));
+      return;
+    }
+    loadUsers();
   }
 
   function openEdit(user) {
