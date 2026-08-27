@@ -168,6 +168,15 @@
     currentReport = report;
     plans = (report?.report_plans || []).sort((a,b) => a.sort_order - b.sort_order);
 
+    // 저장된 항목이 없으면 차주 월~금 5일치 기본 생성
+    if (!plans.length) {
+      plans = [0,1,2,3,4].map(i => ({
+        plan_date: toYMD(addDays(nextMonday, i)),
+        content: '',
+        sort_order: i,
+      }));
+    }
+
     if (report?.saved_at) {
       document.getElementById('savedAt').textContent = `마지막 저장: ${formatDT(report.saved_at)}`;
     }
