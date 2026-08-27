@@ -7,10 +7,22 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="js/config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@14/marked.min.js"></script>
   <style>
     body { background: #0a0c18; }
     .card { background: #12142a; border: 1px solid rgba(255,255,255,0.06); }
     .sep { border-color: rgba(255,255,255,0.06); }
+    .md-body h1,.md-body h2,.md-body h3,.md-body h4,.md-body h5,.md-body h6 { margin: 0.5em 0 0.25em; font-weight: 700; }
+    .md-body p { margin: 0.25em 0; }
+    .md-body ul,.md-body ol { margin: 0.25em 0; padding-left: 1.5em; }
+    .md-body li { margin: 0.125em 0; }
+    .md-body code { background: rgba(255,255,255,0.08); padding: 0.1em 0.3em; border-radius: 4px; font-size: 0.9em; }
+    .md-body pre { background: rgba(255,255,255,0.05); padding: 0.75em; border-radius: 6px; overflow-x: auto; margin: 0.25em 0; }
+    .md-body pre code { background: none; padding: 0; }
+    .md-body blockquote { border-left: 3px solid rgba(124,108,247,0.5); padding-left: 0.75em; color: #8b93ac; margin: 0.25em 0; }
+    .md-body a { color: #9d8ffb; }
+    .md-body hr { border-color: rgba(255,255,255,0.06); }
+    .md-body strong { font-weight: 700; }
     input[type="date"] { color-scheme: dark; }
     input[type="date"]::-webkit-calendar-picker-indicator { display: none !important; }
     textarea { line-height: 1.5; min-height: calc(1.5em * 4 + 1rem); resize: none; overflow: hidden; }
@@ -121,6 +133,12 @@
     const d = new Date(ymd + 'T00:00:00');
     return `${ymd}(${DAY_KR[d.getDay()]})`;
   }
+  marked.setOptions({ breaks: true, gfm: true });
+  function renderMd(s) {
+    if (!s || !s.trim()) return '-';
+    return marked.parse(s);
+  }
+
   function formatDT(iso) {
     if (!iso) return '-';
     const d = new Date(iso);
@@ -206,7 +224,7 @@
     el.innerHTML = sorted.map(p => `
       <div class="grid divide-x sep" style="grid-template-columns: 140px 1fr;">
         <div class="px-4 py-4 text-sm text-[#8b93ac] whitespace-nowrap">${toKR(p.plan_date)}</div>
-        <div class="px-4 py-4 text-sm text-white/60">${p.content || '-'}</div>
+        <div class="px-4 py-4 text-sm text-white/80 md-body"><div class="prose-sm">${renderMd(p.content)}</div></div>
       </div>`).join('');
   }
 
