@@ -19,28 +19,70 @@
         📋
       </div>
       <h1 class="text-2xl font-bold">주간보고</h1>
-      <p class="text-sm text-[#8b93ac] mt-1">로그인하여 시작하세요</p>
+      <p class="text-sm text-[#8b93ac] mt-1" id="subtitle">로그인하여 시작하세요</p>
     </div>
+
+    <!-- 탭 -->
+    <div class="flex bg-white/5 rounded-2xl p-1 mb-4">
+      <button id="tabLogin" onclick="switchTab('login')"
+        class="flex-1 py-2 text-sm font-semibold rounded-xl transition bg-[#7c6cf7] text-white">
+        로그인
+      </button>
+      <button id="tabSignup" onclick="switchTab('signup')"
+        class="flex-1 py-2 text-sm font-semibold rounded-xl transition text-[#8b93ac]">
+        회원가입
+      </button>
+    </div>
+
     <div class="card rounded-3xl p-6">
+
+      <!-- 로그인 폼 -->
       <form id="loginForm" class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-[#8b93ac] mb-2">이메일</label>
-          <input type="email" id="email" required placeholder="your@email.com"
+          <input type="email" id="loginEmail" required placeholder="your@email.com"
             class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-[#5c6178] focus:outline-none focus:ring-2 focus:ring-[#7c6cf7]/50 focus:bg-white/10 transition">
         </div>
         <div>
           <label class="block text-sm font-medium text-[#8b93ac] mb-2">비밀번호</label>
-          <input type="password" id="password" required placeholder="••••••••"
+          <input type="password" id="loginPassword" required placeholder="••••••••"
             class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-[#5c6178] focus:outline-none focus:ring-2 focus:ring-[#7c6cf7]/50 focus:bg-white/10 transition">
         </div>
-        <p id="errorMsg" class="text-xs text-[#fb7185] hidden"></p>
-        <button type="submit" id="submitBtn"
+        <p id="loginError" class="text-xs text-[#fb7185] hidden"></p>
+        <button type="submit" id="loginBtn"
           class="w-full py-3 text-sm font-semibold bg-gradient-to-br from-[#7c6cf7] to-[#4f7cf7] text-white rounded-xl hover:opacity-90 active:scale-95 transition mt-2">
           로그인
         </button>
       </form>
+
+      <!-- 회원가입 폼 -->
+      <form id="signupForm" class="space-y-4 hidden">
+        <div>
+          <label class="block text-sm font-medium text-[#8b93ac] mb-2">이름</label>
+          <input type="text" id="signupName" required placeholder="홍길동"
+            class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-[#5c6178] focus:outline-none focus:ring-2 focus:ring-[#7c6cf7]/50 focus:bg-white/10 transition">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-[#8b93ac] mb-2">이메일</label>
+          <input type="email" id="signupEmail" required placeholder="your@email.com"
+            class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-[#5c6178] focus:outline-none focus:ring-2 focus:ring-[#7c6cf7]/50 focus:bg-white/10 transition">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-[#8b93ac] mb-2">비밀번호</label>
+          <input type="password" id="signupPassword" required placeholder="6자 이상"
+            class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-[#5c6178] focus:outline-none focus:ring-2 focus:ring-[#7c6cf7]/50 focus:bg-white/10 transition">
+        </div>
+        <p id="signupError" class="text-xs text-[#fb7185] hidden"></p>
+        <p id="signupSuccess" class="text-xs text-[#4ade80] hidden"></p>
+        <button type="submit" id="signupBtn"
+          class="w-full py-3 text-sm font-semibold bg-gradient-to-br from-[#7c6cf7] to-[#4f7cf7] text-white rounded-xl hover:opacity-90 active:scale-95 transition mt-2">
+          회원가입
+        </button>
+      </form>
+
     </div>
   </div>
+
   <script>
     const { createClient } = supabase;
     const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -49,16 +91,25 @@
       if (session) window.location.href = 'index.html';
     });
 
+    function switchTab(tab) {
+      const isLogin = tab === 'login';
+      document.getElementById('loginForm').classList.toggle('hidden', !isLogin);
+      document.getElementById('signupForm').classList.toggle('hidden', isLogin);
+      document.getElementById('tabLogin').className = `flex-1 py-2 text-sm font-semibold rounded-xl transition ${isLogin ? 'bg-[#7c6cf7] text-white' : 'text-[#8b93ac]'}`;
+      document.getElementById('tabSignup').className = `flex-1 py-2 text-sm font-semibold rounded-xl transition ${!isLogin ? 'bg-[#7c6cf7] text-white' : 'text-[#8b93ac]'}`;
+      document.getElementById('subtitle').textContent = isLogin ? '로그인하여 시작하세요' : '계정을 만들어 시작하세요';
+    }
+
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const btn = document.getElementById('submitBtn');
-      const err = document.getElementById('errorMsg');
+      const btn = document.getElementById('loginBtn');
+      const err = document.getElementById('loginError');
       btn.textContent = '로그인 중...'; btn.disabled = true;
       err.classList.add('hidden');
 
       const { error } = await sb.auth.signInWithPassword({
-        email: document.getElementById('email').value.trim(),
-        password: document.getElementById('password').value,
+        email: document.getElementById('loginEmail').value.trim(),
+        password: document.getElementById('loginPassword').value,
       });
 
       if (error) {
@@ -68,6 +119,44 @@
         return;
       }
       window.location.href = 'index.html';
+    });
+
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('signupBtn');
+      const err = document.getElementById('signupError');
+      const success = document.getElementById('signupSuccess');
+      btn.textContent = '처리 중...'; btn.disabled = true;
+      err.classList.add('hidden');
+      success.classList.add('hidden');
+
+      const name = document.getElementById('signupName').value.trim();
+      const email = document.getElementById('signupEmail').value.trim();
+      const password = document.getElementById('signupPassword').value;
+
+      if (password.length < 6) {
+        err.textContent = '비밀번호는 6자 이상이어야 합니다.';
+        err.classList.remove('hidden');
+        btn.textContent = '회원가입'; btn.disabled = false;
+        return;
+      }
+
+      const { error } = await sb.auth.signUp({
+        email,
+        password,
+        options: { data: { name } },
+      });
+
+      if (error) {
+        err.textContent = error.message;
+        err.classList.remove('hidden');
+      } else {
+        success.textContent = '가입이 완료되었습니다. 로그인해주세요.';
+        success.classList.remove('hidden');
+        document.getElementById('signupForm').reset();
+        setTimeout(() => switchTab('login'), 2000);
+      }
+      btn.textContent = '회원가입'; btn.disabled = false;
     });
   </script>
 </body>
