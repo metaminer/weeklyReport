@@ -57,17 +57,21 @@ curl -X POST "https://<프로젝트-ref>.supabase.co/functions/v1/remind-unsubmi
 `{"weekStart":"2026-08-24","sent":0,"message":"전원 작성 완료"}` 같은 JSON이 오면 정상입니다.
 테스트 계정이 아직 이번 주를 저장하지 않은 상태라면 실제로 메일이 발송됩니다.
 
-## 6. 스케줄 등록 (매주 자동 실행)
+## 6. 크론 등록 (매시 정각 호출)
+
+발송 요일/시각 자체는 **DB의 `system_settings` 테이블 값**으로 제어합니다 (아래 7번, 관리자 화면에서 수정).
+그래서 크론은 "정확한 그 시각"이 아니라 **매시 정각마다** 함수를 호출하기만 하면 되고,
+함수 안에서 지금이 설정된 요일/시각인지, 이번 주에 이미 보냈는지를 확인한 뒤에만 실제로 발송합니다.
 
 ### 방법 A — Supabase `pg_cron` (권장, 외부 서비스 불필요)
 
 Supabase 대시보드 → Database → Extensions 에서 `pg_cron`과 `pg_net`을 활성화한 뒤,
-SQL Editor에서 아래를 실행합니다 (매주 금요일 15:00 KST = 06:00 UTC 예시):
+SQL Editor에서 아래를 실행합니다:
 
 ```sql
 select cron.schedule(
   'weekly-report-reminder',
-  '0 6 * * 5',
+  '0 * * * *',   -- 매시 정각
   $$
   select net.http_post(
     url := 'https://<프로젝트-ref>.supabase.co/functions/v1/remind-unsubmitted',
@@ -81,13 +85,12 @@ select cron.schedule(
 );
 ```
 
-시간을 바꾸고 싶으면 `'0 6 * * 5'`(cron 표현식, UTC 기준)를 수정하세요. 예: 매주 목요일 17:00 KST → `'0 8 * * 4'`.
-
-등록된 스케줄 확인/삭제:
+등록된 스케줄 확인/삭제/수정:
 
 ```sql
 select * from cron.job;
 select cron.unschedule('weekly-report-reminder');
+select cron.alter_job(job_id := 1, schedule := '0 * * * *');
 ```
 
 ### 방법 B — 외부 무료 크론(cron-job.org 등)
@@ -97,10 +100,24 @@ pg_cron을 쓰지 않으려면 https://cron-job.org 같은 무료 서비스에�
 - URL: `https://<프로젝트-ref>.supabase.co/functions/v1/remind-unsubmitted`
 - Method: POST
 - Header: `x-cron-secret: 아무렇게나-정한-긴-문자열`
-- 주기: 매주 원하는 요일/시각
+- 주기: 매시 정각 (`0 * * * *`)
+
+## 7. 발송 요일/시각 설정 (관리자 화면)
+
+관리자 계정으로 로그인 → 관리자 아이콘 → **시스템 설정 — 미작성자 리마인드 메일** 섹션에서:
+
+- 발송 사용 여부(토글)
+- 요일 (일~토)
+- 시각 (한국 시간 기준 0~23시)
+
+를 설정하고 저장하면, 다음 매시 정각 크론 실행부터 바로 반영됩니다. pg_cron 스케줄을 다시 건드릴 필요는 없습니다.
+
+같은 주에 이미 발송했다면 `system_settings.last_sent_week_start`에 그 주의 월요일 날짜가 기록되어
+중복 발송되지 않습니다 (다음 주가 되면 자동으로 다시 보낼 수 있는 상태가 됨).
 
 ## 참고
 
 - "저장 여부" 판단 기준은 `reports.saved_at` 값이 있는지입니다 (앱에서 "저장" 버튼을 눌러야 채워짐).
 - 메일 대상은 `profiles.role = 'member'`인 사용자만입니다. 매니저/관리자는 제외됩니다.
-- 로직을 바꾸고 싶으면(예: 매니저에게도 요약 발송) `index.ts`를 수정 후 3번 배포 명령을 다시 실행하면 됩니다.
+- `?force=true` 쿼리 파라미터를 붙여 호출하면 요일/시각/중복 체크를 건너뛰고 즉시 발송합니다 (수동 테스트용). `last_sent_week_start`도 갱신하지 않습니다.
+- 로직을 바꾸고 싶으면 `index.ts`를 수정 후 4번 배포 명령을 다시 실행하면 됩니다.
