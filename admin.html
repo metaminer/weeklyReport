@@ -50,6 +50,45 @@
     <div class="text-center py-12 text-[#8b93ac] text-sm">불러오는 중...</div>
   </div>
 
+  <!-- 시스템 설정 -->
+  <div class="card rounded-2xl px-5 py-5 space-y-4">
+    <h2 class="text-sm font-bold">시스템 설정 — 미작성자 리마인드 메일</h2>
+
+    <label class="flex items-center justify-between">
+      <span class="text-sm text-[#8b93ac]">리마인드 메일 발송 사용</span>
+      <input type="checkbox" id="reminderEnabled" class="w-5 h-5 accent-[#7c6cf7]">
+    </label>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-sm font-medium text-[#8b93ac] mb-2">요일</label>
+        <select id="reminderWeekday"
+          class="w-full bg-[#12142a] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#7c6cf7]/50 transition">
+          <option value="0">일요일</option>
+          <option value="1">월요일</option>
+          <option value="2">화요일</option>
+          <option value="3">수요일</option>
+          <option value="4">목요일</option>
+          <option value="5">금요일</option>
+          <option value="6">토요일</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-[#8b93ac] mb-2">시각 (한국 시간)</label>
+        <select id="reminderHour"
+          class="w-full bg-[#12142a] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#7c6cf7]/50 transition"></select>
+      </div>
+    </div>
+
+    <p id="settingsStatus" class="text-xs text-[#8b93ac]"></p>
+    <p id="settingsError" class="text-xs text-[#fb7185] hidden"></p>
+
+    <button id="saveSettingsBtn"
+      class="w-full py-3 text-sm font-semibold bg-gradient-to-br from-[#7c6cf7] to-[#4f7cf7] text-white rounded-xl hover:opacity-90 active:scale-95 transition">
+      저장
+    </button>
+  </div>
+
 </main>
 
 <!-- 편집 모달 -->
@@ -98,7 +137,55 @@
     const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
     if (!profile || profile.role !== 'admin') { window.location.href = 'index.html'; return; }
     loadUsers();
+    loadSettings();
   }
+
+  const DAY_KR = ['일','월','화','수','목','금','토'];
+
+  function formatDT(iso) {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    const p = n => String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+
+  async function loadSettings() {
+    const hourSelect = document.getElementById('reminderHour');
+    hourSelect.innerHTML = Array.from({ length: 24 }, (_, h) => `<option value="${h}">${String(h).padStart(2,'0')}:00</option>`).join('');
+
+    const { data: settings, error } = await sb.from('system_settings').select('*').eq('id', 1).single();
+    if (error || !settings) {
+      document.getElementById('settingsStatus').textContent = '설정을 불러오지 못했습니다.';
+      return;
+    }
+    document.getElementById('reminderEnabled').checked = settings.reminder_enabled;
+    document.getElementById('reminderWeekday').value = settings.reminder_weekday;
+    document.getElementById('reminderHour').value = settings.reminder_hour;
+    const lastSent = settings.last_sent_week_start ? `최근 발송: ${settings.last_sent_week_start} 주` : '아직 발송 이력 없음';
+    document.getElementById('settingsStatus').textContent = `${lastSent} · 마지막 저장: ${formatDT(settings.updated_at)}`;
+  }
+
+  document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('saveSettingsBtn');
+    const err = document.getElementById('settingsError');
+    btn.textContent = '저장 중...'; btn.disabled = true;
+    err.classList.add('hidden');
+
+    const { error } = await sb.from('system_settings').update({
+      reminder_enabled: document.getElementById('reminderEnabled').checked,
+      reminder_weekday: Number(document.getElementById('reminderWeekday').value),
+      reminder_hour: Number(document.getElementById('reminderHour').value),
+      updated_at: new Date().toISOString(),
+    }).eq('id', 1);
+
+    if (error) {
+      err.textContent = '저장 실패: ' + error.message;
+      err.classList.remove('hidden');
+    } else {
+      await loadSettings();
+    }
+    btn.textContent = '저장'; btn.disabled = false;
+  });
 
   async function loadUsers() {
     const { data: users } = await sb.from('profiles').select('*').order('name');

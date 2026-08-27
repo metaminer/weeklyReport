@@ -56,12 +56,35 @@ CREATE TABLE IF NOT EXISTS report_plans (
 ALTER TABLE report_plans ADD COLUMN IF NOT EXISTS actual_content TEXT;
 ALTER TABLE report_plans ADD COLUMN IF NOT EXISTS actual_updated_at TIMESTAMPTZ;
 
+-- 시스템 설정 (싱글턴 행 1개만 존재)
+CREATE TABLE IF NOT EXISTS system_settings (
+  id INT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  reminder_enabled BOOLEAN NOT NULL DEFAULT true,
+  reminder_weekday INT NOT NULL DEFAULT 5 CHECK (reminder_weekday BETWEEN 0 AND 6), -- 0=일 ... 6=토
+  reminder_hour INT NOT NULL DEFAULT 15 CHECK (reminder_hour BETWEEN 0 AND 23),     -- KST 기준 시
+  last_sent_week_start DATE,   -- 이번 주 리마인드를 이미 보냈는지 (중복 발송 방지)
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+INSERT INTO system_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+
 -- =============================================
 -- RLS
 -- =============================================
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE report_plans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE system_settings ENABLE ROW LEVEL SECURITY;
+
+-- system_settings: 로그인 사용자는 조회만, 변경은 admin만
+CREATE POLICY "settings_select" ON system_settings
+  FOR SELECT USING (auth.uid() IS NOT NULL);
+
+CREATE POLICY "settings_update" ON system_settings
+  FOR UPDATE USING (
+    (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
+  ) WITH CHECK (
+    (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
+  );
 
 -- profiles: 로그인 사용자 전체 조회 가능
 CREATE POLICY "profiles_select" ON profiles
