@@ -275,7 +275,7 @@
       }
       el.innerHTML = items.map(p => `
         <div class="grid grid-cols-[80px_1fr] sm:grid-cols-[150px_1fr] divide-x sep">
-          <div class="px-2 sm:px-4 py-2.5 text-sm text-[#8b93ac] whitespace-nowrap">${toKR(p.plan_date)}</div>
+          <div class="px-2 sm:px-4 py-2.5 text-sm text-[#8b93ac] break-words">${toKR(p.plan_date)}</div>
           <div class="px-2 sm:px-4 py-2.5 text-sm text-white/80 md-body break-words">${renderMd(p.content)}</div>
         </div>`).join('');
     };

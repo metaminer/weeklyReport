@@ -30,8 +30,8 @@
     .md-body a { color: #9d8ffb; }
     .md-body hr { border-color: rgba(255,255,255,0.06); }
     .md-body strong { font-weight: 700; }
-    input[type="date"] { color-scheme: dark; }
-    input[type="date"]::-webkit-calendar-picker-indicator { display: none !important; }
+    input[type="date"] { color-scheme: dark; -webkit-appearance: none; appearance: none; }
+    input[type="date"]::-webkit-calendar-picker-indicator { display: none; opacity: 0; width: 0; height: 0; }
     textarea { line-height: 1.5; min-height: calc(1.5em * 4 + 1rem); resize: none; overflow: hidden; }
   </style>
 </head>
@@ -320,7 +320,7 @@
     const sorted = [...items].sort((a,b) => a.sort_order - b.sort_order);
     el.innerHTML = sorted.map(p => `
       <div class="grid grid-cols-[96px_1fr] sm:grid-cols-[140px_1fr] divide-x sep">
-        <div class="px-2 sm:px-4 py-4 text-sm text-[#8b93ac] whitespace-nowrap">${toKR(p.plan_date)}</div>
+        <div class="px-2 sm:px-4 py-4 text-sm text-[#8b93ac] break-words">${toKR(p.plan_date)}</div>
         <div class="px-2 sm:px-4 py-4 text-sm text-white/80 md-body break-words"><div class="prose-sm">${renderMd(p.content)}</div></div>
       </div>`).join('');
   }
