@@ -215,7 +215,7 @@
     const d = new Date(ymd + 'T00:00:00');
     return `${ymd}(${DAY_KR[d.getDay()]})`;
   }
-  marked.setOptions({ breaks: true, gfm: true });
+  marked.use({ breaks: true });
   function renderMd(s) {
     if (!s || !s.trim()) return '-';
     return marked.parse(s);
@@ -429,6 +429,9 @@
     setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2000);
   }
 
+  document.getElementById('previewModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('previewModal')) closePreviewModal();
+  });
   document.getElementById('guideBtn').addEventListener('click', () => {
     document.getElementById('guideModal').classList.remove('hidden');
   });

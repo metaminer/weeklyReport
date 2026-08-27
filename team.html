@@ -157,7 +157,7 @@
     return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
-  marked.setOptions({ breaks: true, gfm: true });
+  marked.use({ breaks: true });
   function renderMd(s) {
     if (!s || !s.trim()) return '-';
     return marked.parse(s);
