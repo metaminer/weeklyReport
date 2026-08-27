@@ -42,7 +42,10 @@
       </div>
     </div>
     <div class="flex items-center gap-2">
-      <a id="teamLink" href="team.html" class="hidden w-11 h-11 rounded-full card flex items-center justify-center hover:bg-white/5 transition" title="팀 보고서">
+      <button id="guideBtn" class="w-11 h-11 rounded-full card flex items-center justify-center hover:bg-white/5 transition" title="Markdown 가이드">
+      <svg class="w-5 h-5 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"/></svg>
+    </button>
+    <a id="teamLink" href="team.html" class="hidden w-11 h-11 rounded-full card flex items-center justify-center hover:bg-white/5 transition" title="팀 보고서">
         <svg class="w-5 h-5 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
       </a>
       <a id="adminLink" href="admin.html" class="hidden w-11 h-11 rounded-full card flex items-center justify-center hover:bg-white/5 transition" title="관리자">
@@ -104,6 +107,56 @@
   </div>
 
 </main>
+
+<!-- Markdown 가이드 모달 -->
+<div id="guideModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden p-4">
+  <div class="card rounded-3xl w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl">
+    <div class="flex items-center justify-between px-6 py-5 border-b sep sticky top-0 card">
+      <h3 class="text-base font-bold">Markdown 가이드</h3>
+      <button onclick="document.getElementById('guideModal').classList.add('hidden')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition">
+        <svg class="w-4 h-4 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="px-6 py-5 space-y-4 text-sm">
+      <div class="space-y-2">
+        <p class="font-semibold text-white/80">텍스트 스타일</p>
+        <div class="space-y-1 text-[#8b93ac]">
+          <p><code class="text-[#9d8ffb] bg-[#9d8ffb]/10 px-1.5 py-0.5 rounded text-xs">**굵게**</code> → **굵게**</p>
+          <p><code class="text-[#9d8ffb] bg-[#9d8ffb]/10 px-1.5 py-0.5 rounded text-xs">*기울임*</code> → <em>기울임</em></p>
+          <p><code class="text-[#9d8ffb] bg-[#9d8ffb]/10 px-1.5 py-0.5 rounded text-xs">~~취소선~~</code> → <s>취소선</s></p>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <p class="font-semibold text-white/80">목록</p>
+        <div class="space-y-1 text-[#8b93ac]">
+          <p><code class="text-[#9d8ffb] bg-[#9d8ffb]/10 px-1.5 py-0.5 rounded text-xs">- 항목 1</code> <span class="ml-2">• 불릿 목록</span></p>
+          <p><code class="text-[#9d8ffb] bg-[#9d8ffb]/10 px-1.5 py-0.5 rounded text-xs">1. 항목 1</code> <span class="ml-2">• 번호 목록</span></p>
+          <p><code class="text-[#9d8ffb] bg-[#9d8ffb]/10 px-1.5 py-0.5 rounded text-xs">- [ ] 할 일</code> <span class="ml-2">• 체크리스트</span></p>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <p class="font-semibold text-white/80">코드</p>
+        <div class="space-y-1 text-[#8b93ac]">
+          <p><code class="text-[#9d8ffb] bg-[#9d8ffb]/10 px-1.5 py-0.5 rounded text-xs">`코드`</code> → 인라인 코드</p>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <p class="font-semibold text-white/80">인용</p>
+        <div class="space-y-1 text-[#8b93ac]">
+          <p><code class="text-[#9d8ffb] bg-[#9d8ffb]/10 px-1.5 py-0.5 rounded text-xs">&gt; 인용문</code> → <span class="border-l-2 border-[#7c6cf7] pl-2 text-[#8b93ac]">인용문</span></p>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <p class="font-semibold text-white/80">기타</p>
+        <div class="space-y-1 text-[#8b93ac]">
+          <p><code class="text-[#9d8ffb] bg-[#9d8ffb]/10 px-1.5 py-0.5 rounded text-xs">[텍스트](url)</code> → 링크</p>
+          <p><code class="text-[#9d8ffb] bg-[#9d8ffb]/10 px-1.5 py-0.5 rounded text-xs">---</code> → 가로선</p>
+          <p>줄바꿈은 Enter 한 번으로 가능</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
   const { createClient } = supabase;
@@ -340,6 +393,14 @@
     setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2000);
   }
 
+  document.getElementById('guideBtn').addEventListener('click', () => {
+    document.getElementById('guideModal').classList.remove('hidden');
+  });
+  document.getElementById('guideModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('guideModal')) {
+      document.getElementById('guideModal').classList.add('hidden');
+    }
+  });
   document.getElementById('saveBtn').addEventListener('click', saveReport);
   document.getElementById('logoutBtn').addEventListener('click', async () => {
     await sb.auth.signOut(); window.location.href = 'login.html';
