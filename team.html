@@ -290,7 +290,8 @@
   }
 
   document.getElementById('modal').addEventListener('click', e => {
-    if (e.target === document.getElementById('modal')) closeModal();
+    if (e.target === document.getElementById('modal') && !wasResizing) closeModal();
+    wasResizing = false;
   });
   document.getElementById('prevWeekBtn').addEventListener('click', () => {
     viewMonday = addDays(viewMonday, -7); loadWeek();
@@ -308,6 +309,7 @@
   init();
 
   // 모달 리사이즈
+  let wasResizing = false;
   (function() {
     const box = document.getElementById('modalBox');
     let dir = null, sx, sy, sw, sh;
@@ -324,6 +326,7 @@
 
     document.addEventListener('mousemove', e => {
       if (!dir) return;
+      wasResizing = true;
       const dx = e.clientX - sx, dy = e.clientY - sy;
       const minW = 480, minH = 300;
       if (dir.includes('e')) box.style.width  = Math.max(minW, sw + dx) + 'px';
