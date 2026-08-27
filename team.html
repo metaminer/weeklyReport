@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>팀 보고서</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { background: #0a0c18; }
+    .card { background: #12142a; border: 1px solid rgba(255,255,255,0.06); }
+    .sep { border-color: rgba(255,255,255,0.06); }
+    input[type="date"] { color-scheme: dark; }
+  </style>
+</head>
+<body class="min-h-screen text-white">
+<main class="max-w-5xl mx-auto px-4 py-6 space-y-4">
+
+  <!-- 헤더 -->
+  <header class="flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7c6cf7] to-[#4f7cf7] flex items-center justify-center text-2xl shadow-lg shadow-indigo-900/40">👥</div>
+      <div>
+        <h1 class="text-xl font-bold leading-tight">팀 보고서</h1>
+        <p class="text-sm text-[#8b93ac] leading-tight" id="weekLabel">-</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <a href="index.html" class="w-11 h-11 rounded-full card flex items-center justify-center hover:bg-white/5 transition" title="내 보고서">
+        <svg class="w-5 h-5 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      </a>
+      <a id="adminLink" href="admin.html" class="hidden w-11 h-11 rounded-full card flex items-center justify-center hover:bg-white/5 transition" title="관리자">
+        <svg class="w-5 h-5 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </a>
+      <button id="logoutBtn" class="w-11 h-11 rounded-full card flex items-center justify-center hover:bg-white/5 transition" title="로그아웃">
+        <svg class="w-5 h-5 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- 주차 선택 -->
+  <div class="card rounded-2xl px-5 py-3.5 flex items-center justify-between">
+    <button id="prevWeekBtn" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/5 transition">
+      <svg class="w-5 h-5 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    </button>
+    <div class="text-center">
+      <p id="weekRangeLabel" class="text-sm font-semibold">-</p>
+      <button id="thisWeekBtn" class="text-xs text-[#7c6cf7] hover:text-[#9d8ffb] mt-0.5 transition">이번 주로</button>
+    </div>
+    <button id="nextWeekBtn" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/5 transition">
+      <svg class="w-5 h-5 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+
+  <!-- 팀원 목록 -->
+  <div id="memberList" class="space-y-3">
+    <div class="text-center py-12 text-[#8b93ac] text-sm">불러오는 중...</div>
+  </div>
+
+</main>
+
+<!-- 보고서 상세 모달 -->
+<div id="modal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden p-4">
+  <div class="card rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
+    <div class="flex items-center justify-between px-6 py-5 border-b sep sticky top-0 card">
+      <div>
+        <h3 id="modalName" class="text-base font-bold"></h3>
+        <p id="modalSavedAt" class="text-xs text-[#8b93ac] mt-0.5"></p>
+      </div>
+      <button onclick="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition">
+        <svg class="w-4 h-4 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="p-6 overflow-x-auto">
+      <div class="min-w-[600px]">
+        <!-- 주차 헤더 -->
+        <div class="grid grid-cols-2 divide-x sep border border-white/10 rounded-t-2xl overflow-hidden">
+          <div class="bg-white/3 px-4 py-3 text-center">
+            <div class="text-xs text-[#8b93ac] mb-0.5">금주 실적</div>
+            <div class="text-xs font-semibold" id="modalThisRange">-</div>
+          </div>
+          <div class="bg-[#7c6cf7]/10 px-4 py-3 text-center">
+            <div class="text-xs text-[#8b93ac] mb-0.5">차주 계획</div>
+            <div class="text-xs font-semibold" id="modalNextRange">-</div>
+          </div>
+        </div>
+        <!-- 컬럼 헤더 -->
+        <div class="grid grid-cols-2 divide-x sep border-x border-b border-white/10">
+          <div class="grid divide-x sep" style="grid-template-columns: 150px 1fr;">
+            <div class="px-4 py-2 text-xs font-medium text-[#8b93ac]">일자</div>
+            <div class="px-4 py-2 text-xs font-medium text-[#8b93ac]">내용</div>
+          </div>
+          <div class="grid divide-x sep" style="grid-template-columns: 150px 1fr;">
+            <div class="px-4 py-2 text-xs font-medium text-[#8b93ac]">일자</div>
+            <div class="px-4 py-2 text-xs font-medium text-[#8b93ac]">내용</div>
+          </div>
+        </div>
+        <!-- 바디 -->
+        <div class="grid grid-cols-2 divide-x sep border-x border-b border-white/10 rounded-b-2xl overflow-hidden min-h-[80px]">
+          <div id="modalThisWeek" class="divide-y sep"></div>
+          <div id="modalNextWeek" class="divide-y sep"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const DAY_KR = ['일','월','화','수','목','금','토'];
+
+  function getMonday(date = new Date()) {
+    const d = new Date(date);
+    const day = d.getDay();
+    d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+    d.setHours(0,0,0,0);
+    return d;
+  }
+  function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+  function toYMD(d) { return d.toISOString().split('T')[0]; }
+  function toKR(ymd) {
+    if (!ymd) return '-';
+    const d = new Date(ymd + 'T00:00:00');
+    return `${ymd}(${DAY_KR[d.getDay()]})`;
+  }
+  function formatDT(iso) {
+    if (!iso) return '미저장';
+    const d = new Date(iso);
+    const p = n => String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+  function weekRange(monday) {
+    const fri = addDays(monday, 4);
+    return `${toYMD(monday)}(${DAY_KR[monday.getDay()]}) ~ ${toYMD(fri)}(${DAY_KR[fri.getDay()]})`;
+  }
+
+  let viewMonday = getMonday();
+
+  async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; return; }
+
+    const { data: profile } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
+    if (!profile || !['manager','admin'].includes(profile.role)) {
+      window.location.href = 'index.html'; return;
+    }
+    if (profile.role === 'admin') document.getElementById('adminLink').classList.remove('hidden');
+
+    await loadWeek();
+  }
+
+  async function loadWeek() {
+    const fri = addDays(viewMonday, 4);
+    document.getElementById('weekRangeLabel').textContent = weekRange(viewMonday);
+    document.getElementById('weekLabel').textContent = weekRange(viewMonday);
+
+    const mondayStr = toYMD(viewMonday);
+    const lastMondayStr = toYMD(addDays(viewMonday, -7));
+    const nextMondayStr = toYMD(addDays(viewMonday, 7));
+
+    // 모든 팀원 조회
+    const { data: members } = await sb.from('profiles').select('*').eq('role', 'member').order('name');
+
+    // 이번 주, 지난 주 보고서 한번에 조회
+    const { data: reports } = await sb
+      .from('reports').select('*, report_plans(*)')
+      .in('week_start', [mondayStr, lastMondayStr]);
+
+    const el = document.getElementById('memberList');
+    if (!members?.length) {
+      el.innerHTML = '<div class="text-center py-12 text-[#8b93ac] text-sm">팀원이 없습니다.</div>';
+      return;
+    }
+
+    el.innerHTML = members.map(m => {
+      const thisReport = reports?.find(r => r.user_id === m.id && r.week_start === mondayStr);
+      const saved = thisReport?.saved_at;
+      return `
+        <div class="card rounded-2xl px-5 py-4 flex items-center justify-between cursor-pointer hover:bg-white/3 transition"
+             onclick="openModal('${m.id}', '${m.name}', '${mondayStr}', '${lastMondayStr}')">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-[#7c6cf7]/20 flex items-center justify-center text-sm font-bold text-[#7c6cf7]">
+              ${m.name.charAt(0)}
+            </div>
+            <div>
+              <p class="text-sm font-semibold">${m.name}</p>
+              <p class="text-xs text-[#8b93ac] mt-0.5">${saved ? '저장: ' + formatDT(saved) : '미작성'}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-xs px-2.5 py-1 rounded-full font-medium ${saved ? 'bg-[#7c6cf7]/20 text-[#9d8ffb]' : 'bg-white/5 text-[#8b93ac]'}">
+              ${saved ? '작성완료' : '미작성'}
+            </span>
+            <svg class="w-4 h-4 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  async function openModal(userId, userName, mondayStr, lastMondayStr) {
+    const monday = new Date(mondayStr + 'T00:00:00');
+    const nextMonday = addDays(monday, 7);
+
+    document.getElementById('modalName').textContent = `${userName}의 주간보고`;
+    document.getElementById('modalThisRange').textContent = weekRange(monday);
+    document.getElementById('modalNextRange').textContent = weekRange(nextMonday);
+
+    const { data: reports } = await sb
+      .from('reports').select('*, report_plans(*)')
+      .eq('user_id', userId)
+      .in('week_start', [mondayStr, lastMondayStr]);
+
+    const thisReport = reports?.find(r => r.week_start === mondayStr);
+    const lastReport = reports?.find(r => r.week_start === lastMondayStr);
+
+    document.getElementById('modalSavedAt').textContent = thisReport?.saved_at ? `저장: ${formatDT(thisReport.saved_at)}` : '미작성';
+
+    const thisPlans = (lastReport?.report_plans || []).sort((a,b) => a.sort_order - b.sort_order);
+    const nextPlans = (thisReport?.report_plans || []).sort((a,b) => a.sort_order - b.sort_order);
+
+    const renderList = (items, elId) => {
+      const el = document.getElementById(elId);
+      if (!items.length) {
+        el.innerHTML = '<div class="px-4 py-6 text-sm text-[#8b93ac] text-center">없음</div>';
+        return;
+      }
+      el.innerHTML = items.map(p => `
+        <div class="grid divide-x sep" style="grid-template-columns: 150px 1fr;">
+          <div class="px-4 py-2.5 text-sm text-[#8b93ac] whitespace-nowrap">${toKR(p.plan_date)}</div>
+          <div class="px-4 py-2.5 text-sm text-white/70">${p.content || '-'}</div>
+        </div>`).join('');
+    };
+
+    renderList(thisPlans, 'modalThisWeek');
+    renderList(nextPlans, 'modalNextWeek');
+    document.getElementById('modal').classList.remove('hidden');
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.add('hidden');
+  }
+
+  document.getElementById('modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal')) closeModal();
+  });
+  document.getElementById('prevWeekBtn').addEventListener('click', () => {
+    viewMonday = addDays(viewMonday, -7); loadWeek();
+  });
+  document.getElementById('nextWeekBtn').addEventListener('click', () => {
+    viewMonday = addDays(viewMonday, 7); loadWeek();
+  });
+  document.getElementById('thisWeekBtn').addEventListener('click', () => {
+    viewMonday = getMonday(); loadWeek();
+  });
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await sb.auth.signOut(); window.location.href = 'login.html';
+  });
+
+  init();
+</script>
+</body>
+</html>

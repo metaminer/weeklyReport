@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>주간보고 작성</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { background: #0a0c18; }
+    .card { background: #12142a; border: 1px solid rgba(255,255,255,0.06); }
+    .sep { border-color: rgba(255,255,255,0.06); }
+    input[type="date"] { color-scheme: dark; }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
+    .row-hover:hover .del-btn { opacity: 1; }
+  </style>
+</head>
+<body class="min-h-screen text-white">
+<main class="max-w-5xl mx-auto px-4 py-6 space-y-4">
+
+  <!-- 헤더 -->
+  <header class="flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#7c6cf7] to-[#4f7cf7] flex items-center justify-center text-2xl shadow-lg shadow-indigo-900/40">📋</div>
+      <div>
+        <h1 class="text-xl font-bold leading-tight">주간보고</h1>
+        <p id="userInfo" class="text-sm text-[#8b93ac] leading-tight">-</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <a id="teamLink" href="team.html" class="hidden w-11 h-11 rounded-full card flex items-center justify-center hover:bg-white/5 transition" title="팀 보고서">
+        <svg class="w-5 h-5 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+      </a>
+      <a id="adminLink" href="admin.html" class="hidden w-11 h-11 rounded-full card flex items-center justify-center hover:bg-white/5 transition" title="관리자">
+        <svg class="w-5 h-5 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </a>
+      <button id="logoutBtn" class="w-11 h-11 rounded-full card flex items-center justify-center hover:bg-white/5 transition" title="로그아웃">
+        <svg class="w-5 h-5 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- 저장일시 -->
+  <p id="savedAt" class="text-xs text-[#8b93ac]">저장된 기록 없음</p>
+
+  <!-- 보고서 테이블 -->
+  <div class="card rounded-3xl overflow-x-auto">
+    <div class="min-w-[720px]">
+
+      <!-- 주차 헤더 -->
+      <div class="grid grid-cols-2 divide-x sep">
+        <div class="bg-white/3 px-6 py-4 text-center">
+          <div class="text-xs text-[#8b93ac] mb-1">금주 실적 <span class="text-[#5c6178]">(읽기 전용)</span></div>
+          <div class="text-sm font-semibold" id="thisWeekRange">-</div>
+        </div>
+        <div class="bg-[#7c6cf7]/10 px-6 py-4 text-center">
+          <div class="text-xs text-[#8b93ac] mb-1">차주 계획</div>
+          <div class="text-sm font-semibold" id="nextWeekRange">-</div>
+        </div>
+      </div>
+
+      <!-- 컬럼 헤더 -->
+      <div class="grid grid-cols-2 divide-x sep border-t sep">
+        <div class="grid divide-x sep" style="grid-template-columns: 160px 1fr;">
+          <div class="px-4 py-2 text-xs font-medium text-[#8b93ac]">일자</div>
+          <div class="px-4 py-2 text-xs font-medium text-[#8b93ac]">내용</div>
+        </div>
+        <div class="grid divide-x sep" style="grid-template-columns: 160px 1fr 32px;">
+          <div class="px-4 py-2 text-xs font-medium text-[#8b93ac]">일자</div>
+          <div class="px-4 py-2 text-xs font-medium text-[#8b93ac]">내용</div>
+          <div></div>
+        </div>
+      </div>
+
+      <!-- 바디 -->
+      <div class="grid grid-cols-2 divide-x sep border-t sep min-h-[160px]">
+        <!-- 금주 실적 (read-only) -->
+        <div id="thisWeekList" class="divide-y sep"></div>
+        <!-- 차주 계획 (editable) -->
+        <div id="nextWeekList" class="divide-y sep"></div>
+      </div>
+
+      <!-- 하단 액션 -->
+      <div class="border-t sep px-5 py-3.5 flex items-center justify-between">
+        <button id="addRowBtn" class="flex items-center gap-1.5 text-sm text-[#7c6cf7] hover:text-[#9d8ffb] transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          항목 추가
+        </button>
+        <button id="saveBtn" class="px-6 py-2.5 text-sm font-semibold bg-gradient-to-br from-[#7c6cf7] to-[#4f7cf7] text-white rounded-xl hover:opacity-90 active:scale-95 transition">
+          저장
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<script>
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const DAY_KR = ['일','월','화','수','목','금','토'];
+  let currentUser = null;
+  let currentReport = null;
+  let plans = [];
+
+  // 주차 계산
+  function getMonday(date = new Date()) {
+    const d = new Date(date);
+    const day = d.getDay();
+    d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+    d.setHours(0,0,0,0);
+    return d;
+  }
+  function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+  function toYMD(d) { return d.toISOString().split('T')[0]; }
+  function toKR(ymd) {
+    if (!ymd) return '-';
+    const d = new Date(ymd + 'T00:00:00');
+    return `${ymd}(${DAY_KR[d.getDay()]})`;
+  }
+  function formatDT(iso) {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    const p = n => String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+
+  const thisMonday = getMonday();
+  const thisFriday = addDays(thisMonday, 4);
+  const lastMonday = addDays(thisMonday, -7);
+  const nextMonday = addDays(thisMonday, 7);
+  const nextFriday = addDays(thisMonday, 11);
+
+  function weekRangeStr(start, end) {
+    return `${toYMD(start)}(${DAY_KR[start.getDay()]}) ~ ${toYMD(end)}(${DAY_KR[end.getDay()]})`;
+  }
+
+  async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; return; }
+    currentUser = session.user;
+
+    const { data: profile } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+    if (!profile) { window.location.href = 'login.html'; return; }
+
+    document.getElementById('userInfo').textContent = `${profile.name} · ${roleLabel(profile.role)}`;
+
+    if (profile.role === 'manager' || profile.role === 'admin') {
+      document.getElementById('teamLink').classList.remove('hidden');
+    }
+    if (profile.role === 'admin') {
+      document.getElementById('adminLink').classList.remove('hidden');
+    }
+
+    document.getElementById('thisWeekRange').textContent = weekRangeStr(thisMonday, thisFriday);
+    document.getElementById('nextWeekRange').textContent = weekRangeStr(nextMonday, nextFriday);
+
+    // 이번 주 보고서 (차주 계획)
+    const { data: report } = await sb
+      .from('reports').select('*, report_plans(*)')
+      .eq('user_id', currentUser.id)
+      .eq('week_start', toYMD(thisMonday))
+      .maybeSingle();
+
+    currentReport = report;
+    plans = (report?.report_plans || []).sort((a,b) => a.sort_order - b.sort_order);
+
+    if (report?.saved_at) {
+      document.getElementById('savedAt').textContent = `마지막 저장: ${formatDT(report.saved_at)}`;
+    }
+
+    // 지난 주 보고서 (금주 실적)
+    const { data: lastReport } = await sb
+      .from('reports').select('*, report_plans(*)')
+      .eq('user_id', currentUser.id)
+      .eq('week_start', toYMD(lastMonday))
+      .maybeSingle();
+
+    renderThisWeek(lastReport?.report_plans || []);
+    renderNextWeek();
+  }
+
+  function roleLabel(r) {
+    return { member: '팀원', manager: '관리자', admin: '시스템관리자' }[r] || r;
+  }
+
+  function renderThisWeek(items) {
+    const el = document.getElementById('thisWeekList');
+    if (!items.length) {
+      el.innerHTML = '<div class="px-4 py-8 text-sm text-[#8b93ac] text-center">지난주 계획 없음</div>';
+      return;
+    }
+    const sorted = [...items].sort((a,b) => a.sort_order - b.sort_order);
+    el.innerHTML = sorted.map(p => `
+      <div class="grid divide-x sep" style="grid-template-columns: 160px 1fr;">
+        <div class="px-4 py-3 text-sm text-[#8b93ac] whitespace-nowrap">${toKR(p.plan_date)}</div>
+        <div class="px-4 py-3 text-sm text-white/60">${p.content || '-'}</div>
+      </div>`).join('');
+  }
+
+  function renderNextWeek() {
+    const el = document.getElementById('nextWeekList');
+    if (!plans.length) {
+      el.innerHTML = '<div class="px-4 py-8 text-sm text-[#8b93ac] text-center">항목을 추가하세요</div>';
+      return;
+    }
+    el.innerHTML = plans.map((p, i) => `
+      <div class="grid divide-x sep row-hover" style="grid-template-columns: 160px 1fr 32px;" data-i="${i}">
+        <div class="px-2 py-2">
+          <input type="date" value="${p.plan_date || ''}"
+            class="w-full bg-transparent text-sm text-white px-2 py-1 rounded-lg focus:outline-none focus:bg-white/5 transition"
+            onchange="plans[${i}].plan_date=this.value">
+        </div>
+        <div class="px-2 py-2">
+          <input type="text" value="${p.content || ''}" placeholder="내용 입력..."
+            class="w-full bg-transparent text-sm text-white px-2 py-1 rounded-lg focus:outline-none focus:bg-white/5 transition placeholder-[#5c6178]"
+            oninput="plans[${i}].content=this.value">
+        </div>
+        <div class="flex items-center justify-center">
+          <button class="del-btn opacity-0 w-6 h-6 flex items-center justify-center rounded text-[#8b93ac] hover:text-[#fb7185] transition"
+            onclick="removeRow(${i})">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>`).join('');
+  }
+
+  function addRow() {
+    // 다음 주 평일 날짜 순서로 기본값
+    const weekdays = [0,1,2,3,4].map(i => toYMD(addDays(nextMonday, i)));
+    const usedDates = plans.map(p => p.plan_date).filter(Boolean);
+    const nextDate = weekdays.find(d => !usedDates.includes(d)) || '';
+    plans.push({ plan_date: nextDate, content: '', sort_order: plans.length });
+    renderNextWeek();
+    // 마지막 입력에 포커스
+    const inputs = document.querySelectorAll('#nextWeekList input[type="text"]');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  }
+
+  function removeRow(i) {
+    plans.splice(i, 1);
+    plans.forEach((p, idx) => p.sort_order = idx);
+    renderNextWeek();
+  }
+
+  async function saveReport() {
+    const btn = document.getElementById('saveBtn');
+    btn.textContent = '저장 중...'; btn.disabled = true;
+
+    const now = new Date().toISOString();
+    let reportId = currentReport?.id;
+
+    if (!reportId) {
+      const { data, error } = await sb.from('reports').insert({
+        user_id: currentUser.id,
+        week_start: toYMD(thisMonday),
+        saved_at: now,
+      }).select().single();
+      if (error) { alert('저장 실패: ' + error.message); btn.textContent = '저장'; btn.disabled = false; return; }
+      reportId = data.id;
+      currentReport = data;
+    } else {
+      await sb.from('reports').update({ saved_at: now, updated_at: now }).eq('id', reportId);
+    }
+
+    // 기존 항목 전체 삭제 후 재삽입
+    await sb.from('report_plans').delete().eq('report_id', reportId);
+    const valid = plans.filter(p => p.content.trim());
+    if (valid.length) {
+      const { error } = await sb.from('report_plans').insert(
+        valid.map((p, i) => ({
+          report_id: reportId,
+          plan_date: p.plan_date || null,
+          content: p.content.trim(),
+          sort_order: i,
+        }))
+      );
+      if (error) { alert('저장 실패: ' + error.message); btn.textContent = '저장'; btn.disabled = false; return; }
+    }
+
+    document.getElementById('savedAt').textContent = `마지막 저장: ${formatDT(now)}`;
+    btn.textContent = '저장'; btn.disabled = false;
+  }
+
+  document.getElementById('addRowBtn').addEventListener('click', addRow);
+  document.getElementById('saveBtn').addEventListener('click', saveReport);
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await sb.auth.signOut(); window.location.href = 'login.html';
+  });
+
+  init();
+</script>
+</body>
+</html>

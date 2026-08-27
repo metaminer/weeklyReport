@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>로그인 — 주간보고</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { background: #0a0c18; }
+    .card { background: #12142a; border: 1px solid rgba(255,255,255,0.06); }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center px-4 text-white">
+  <div class="w-full max-w-sm">
+    <div class="text-center mb-8">
+      <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#7c6cf7] to-[#4f7cf7] flex items-center justify-center text-3xl shadow-lg shadow-indigo-900/40 mx-auto mb-4">
+        📋
+      </div>
+      <h1 class="text-2xl font-bold">주간보고</h1>
+      <p class="text-sm text-[#8b93ac] mt-1">로그인하여 시작하세요</p>
+    </div>
+    <div class="card rounded-3xl p-6">
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-[#8b93ac] mb-2">이메일</label>
+          <input type="email" id="email" required placeholder="your@email.com"
+            class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-[#5c6178] focus:outline-none focus:ring-2 focus:ring-[#7c6cf7]/50 focus:bg-white/10 transition">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-[#8b93ac] mb-2">비밀번호</label>
+          <input type="password" id="password" required placeholder="••••••••"
+            class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-[#5c6178] focus:outline-none focus:ring-2 focus:ring-[#7c6cf7]/50 focus:bg-white/10 transition">
+        </div>
+        <p id="errorMsg" class="text-xs text-[#fb7185] hidden"></p>
+        <button type="submit" id="submitBtn"
+          class="w-full py-3 text-sm font-semibold bg-gradient-to-br from-[#7c6cf7] to-[#4f7cf7] text-white rounded-xl hover:opacity-90 active:scale-95 transition mt-2">
+          로그인
+        </button>
+      </form>
+    </div>
+  </div>
+  <script>
+    const { createClient } = supabase;
+    const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    sb.auth.getSession().then(({ data: { session } }) => {
+      if (session) window.location.href = 'index.html';
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      const err = document.getElementById('errorMsg');
+      btn.textContent = '로그인 중...'; btn.disabled = true;
+      err.classList.add('hidden');
+
+      const { error } = await sb.auth.signInWithPassword({
+        email: document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value,
+      });
+
+      if (error) {
+        err.textContent = '이메일 또는 비밀번호가 올바르지 않습니다.';
+        err.classList.remove('hidden');
+        btn.textContent = '로그인'; btn.disabled = false;
+        return;
+      }
+      window.location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>
