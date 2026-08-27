@@ -267,21 +267,39 @@
     const thisPlans = (lastReport?.report_plans || []).sort((a,b) => a.sort_order - b.sort_order);
     const nextPlans = (thisReport?.report_plans || []).sort((a,b) => a.sort_order - b.sort_order);
 
-    const renderList = (items, elId) => {
+    const renderList = (items, elId, isActual) => {
       const el = document.getElementById(elId);
       if (!items.length) {
         el.innerHTML = '<div class="px-4 py-6 text-sm text-[#8b93ac] text-center">없음</div>';
         return;
       }
-      el.innerHTML = items.map(p => `
-        <div class="grid grid-cols-[80px_1fr] sm:grid-cols-[150px_1fr] divide-x sep">
-          <div class="px-2 sm:px-4 py-2.5 text-sm text-[#8b93ac] break-words">${toKR(p.plan_date)}</div>
-          <div class="px-2 sm:px-4 py-2.5 text-sm text-white/80 md-body break-words">${renderMd(p.content)}</div>
-        </div>`).join('');
+      el.innerHTML = items.map((p, i) => {
+        const modified = isActual && p.actual_content != null && p.actual_content.trim() !== (p.content || '').trim();
+        const shown = modified ? p.actual_content : p.content;
+        const uid = `${elId}-${i}`;
+        return `
+        <div>
+          <div class="grid grid-cols-[80px_1fr] sm:grid-cols-[150px_1fr] divide-x sep">
+            <div class="px-2 sm:px-4 py-2.5 text-sm text-[#8b93ac] break-words">
+              ${toKR(p.plan_date)}
+              ${modified ? `<span class="mt-1 block"><span class="inline-block text-[10px] px-1.5 py-0.5 rounded-full bg-amber-400/15 text-amber-300 font-medium">수정됨</span></span>` : ''}
+            </div>
+            <div class="px-2 sm:px-4 py-2.5 text-sm text-white/80 md-body break-words">${renderMd(shown)}</div>
+          </div>
+          ${modified ? `
+          <div class="px-2 sm:px-4 pb-3">
+            <button type="button" onclick="document.getElementById('${uid}').classList.toggle('hidden')" class="text-xs text-[#7c6cf7] hover:text-[#9d8ffb] transition">변경 전/후 비교</button>
+            <div id="${uid}" class="hidden mt-2 text-xs text-[#8b93ac] md-body bg-white/5 rounded-lg px-3 py-2 border sep">
+              <div class="text-[10px] uppercase tracking-wide text-[#5c6178] mb-1">원래 계획</div>
+              ${renderMd(p.content)}
+            </div>
+          </div>` : ''}
+        </div>`;
+      }).join('');
     };
 
-    renderList(thisPlans, 'modalThisWeek');
-    renderList(nextPlans, 'modalNextWeek');
+    renderList(thisPlans, 'modalThisWeek', true);
+    renderList(nextPlans, 'modalNextWeek', false);
     document.getElementById('modal').classList.remove('hidden');
   }
 

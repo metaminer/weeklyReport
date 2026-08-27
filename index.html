@@ -71,10 +71,10 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x sep">
 
-      <!-- 금주 실적 (read-only) -->
+      <!-- 금주 실적 (editable) -->
       <div>
         <div class="bg-white/3 px-4 sm:px-6 py-3 sm:py-4 text-center border-b sep">
-          <div class="text-xs text-[#8b93ac] mb-1">금주 실적 <span class="text-[#5c6178]">(읽기 전용)</span></div>
+          <div class="text-xs text-[#8b93ac] mb-1">금주 실적</div>
           <div class="text-sm font-semibold" id="thisWeekRange">-</div>
         </div>
         <div class="grid grid-cols-[96px_1fr] sm:grid-cols-[140px_1fr] divide-x sep border-b sep">
@@ -209,6 +209,7 @@
   let currentUser = null;
   let currentReport = null;
   let plans = [];
+  let thisWeekItems = [];
 
   // 주차 계산
   function getMonday(date = new Date()) {
@@ -303,7 +304,11 @@
       .eq('week_start', toYMD(lastMonday))
       .maybeSingle();
 
-    renderThisWeek(lastReport?.report_plans || []);
+    thisWeekItems = (lastReport?.report_plans || [])
+      .sort((a,b) => a.sort_order - b.sort_order)
+      .map(p => ({ ...p, _draft: p.actual_content != null ? p.actual_content : p.content }));
+
+    renderThisWeek();
     renderNextWeek();
   }
 
@@ -311,18 +316,68 @@
     return { member: '팀원', manager: '관리자', admin: '시스템관리자' }[r] || r;
   }
 
-  function renderThisWeek(items) {
+  function isModified(p) {
+    return p._draft.trim() !== (p.content || '').trim();
+  }
+
+  function renderThisWeek() {
     const el = document.getElementById('thisWeekList');
-    if (!items.length) {
+    if (!thisWeekItems.length) {
       el.innerHTML = '<div class="px-4 py-8 text-sm text-[#8b93ac] text-center">지난주 계획 없음</div>';
       return;
     }
-    const sorted = [...items].sort((a,b) => a.sort_order - b.sort_order);
-    el.innerHTML = sorted.map(p => `
-      <div class="grid grid-cols-[96px_1fr] sm:grid-cols-[140px_1fr] divide-x sep">
-        <div class="px-2 sm:px-4 py-4 text-sm text-[#8b93ac] break-words">${toKR(p.plan_date)}</div>
-        <div class="px-2 sm:px-4 py-4 text-sm text-white/80 md-body break-words"><div class="prose-sm">${renderMd(p.content)}</div></div>
-      </div>`).join('');
+    el.innerHTML = thisWeekItems.map((p, i) => {
+      const modified = isModified(p);
+      return `
+      <div data-ti="${i}">
+        <div class="grid grid-cols-[96px_1fr] sm:grid-cols-[140px_1fr] divide-x sep">
+          <div class="px-2 sm:px-4 py-3 text-sm text-[#8b93ac] break-words">
+            ${toKR(p.plan_date)}
+            <span id="badge-${i}" class="mt-1 block${modified ? '' : ' hidden'}">
+              <span class="inline-block text-[10px] px-1.5 py-0.5 rounded-full bg-amber-400/15 text-amber-300 font-medium">수정됨</span>
+            </span>
+          </div>
+          <div class="px-2 sm:px-3 py-2 flex items-start gap-1 sm:gap-2">
+            <textarea placeholder="실제 수행 내용 입력 (Markdown 지원)..."
+              class="w-full min-w-0 bg-transparent text-sm text-white px-1 sm:px-2 py-2 rounded-lg focus:outline-none focus:bg-white/5 transition placeholder-[#5c6178]"
+              oninput="thisWeekItems[${i}]._draft=this.value; autoResize(this); updateModifiedBadge(${i})"
+            >${escHtml(p._draft)}</textarea>
+            <button type="button" onclick="openThisWeekPreview(${i})"
+              class="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/10 transition text-[#8b93ac] hover:text-white" title="미리보기">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            </button>
+          </div>
+        </div>
+        <div id="toggle-${i}" class="px-2 sm:px-4 pb-3${modified ? '' : ' hidden'}">
+          <button type="button" onclick="toggleOriginal(${i})" class="text-xs text-[#7c6cf7] hover:text-[#9d8ffb] transition">변경 전/후 비교</button>
+          <div id="orig-${i}" class="hidden mt-2 text-xs text-[#8b93ac] md-body bg-white/5 rounded-lg px-3 py-2 border sep">
+            <div class="text-[10px] uppercase tracking-wide text-[#5c6178] mb-1">원래 계획</div>
+            ${renderMd(p.content)}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    el.querySelectorAll('textarea').forEach(t => { t.style.height = 'auto'; t.style.height = Math.max(t.scrollHeight, t.offsetHeight) + 'px'; });
+  }
+
+  function updateModifiedBadge(i) {
+    const p = thisWeekItems[i];
+    const modified = isModified(p);
+    const badge = document.getElementById(`badge-${i}`);
+    const toggle = document.getElementById(`toggle-${i}`);
+    if (badge) badge.classList.toggle('hidden', !modified);
+    if (toggle) toggle.classList.toggle('hidden', !modified);
+  }
+
+  function toggleOriginal(i) {
+    document.getElementById(`orig-${i}`).classList.toggle('hidden');
+  }
+
+  function openThisWeekPreview(i) {
+    const p = thisWeekItems[i];
+    document.getElementById('previewTitle').textContent = `${toKR(p.plan_date)} — 미리보기`;
+    document.getElementById('previewContent').innerHTML = renderMd(p._draft);
+    document.getElementById('previewModal').classList.remove('hidden');
   }
 
   function escHtml(s) {
@@ -396,11 +451,36 @@
     renderNextWeek();
   }
 
+  async function saveThisWeekActuals(now) {
+    const updates = thisWeekItems
+      .map(p => {
+        const draft = p._draft.trim();
+        const newActual = draft === (p.content || '').trim() ? null : draft;
+        return { p, newActual };
+      })
+      .filter(({ p, newActual }) => newActual !== (p.actual_content ?? null));
+
+    for (const { p, newActual } of updates) {
+      const { error } = await sb.from('report_plans')
+        .update({ actual_content: newActual, actual_updated_at: newActual !== null ? now : null })
+        .eq('id', p.id);
+      if (error) return error;
+      p.actual_content = newActual;
+      p.actual_updated_at = newActual !== null ? now : null;
+    }
+    return null;
+  }
+
   async function saveReport() {
     const btn = document.getElementById('saveBtn');
     btn.textContent = '저장 중...'; btn.disabled = true;
 
     const now = new Date().toISOString();
+
+    const actualError = await saveThisWeekActuals(now);
+    if (actualError) { alert('실적 저장 실패: ' + actualError.message); btn.textContent = '저장'; btn.disabled = false; return; }
+    renderThisWeek();
+
     let reportId = currentReport?.id;
 
     if (!reportId) {

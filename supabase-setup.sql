@@ -46,9 +46,15 @@ CREATE TABLE IF NOT EXISTS report_plans (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   report_id UUID NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
   plan_date DATE,
-  content TEXT NOT NULL DEFAULT '',
+  content TEXT NOT NULL DEFAULT '',       -- 원래 계획 내용
+  actual_content TEXT,                    -- 실제 수행 내용 (계획과 다를 때만 값 존재, NULL이면 계획대로 수행)
+  actual_updated_at TIMESTAMPTZ,          -- 실적 수정 일시
   sort_order INTEGER DEFAULT 0
 );
+
+-- 기존 DB에 이미 report_plans 테이블이 있는 경우 컬럼 추가
+ALTER TABLE report_plans ADD COLUMN IF NOT EXISTS actual_content TEXT;
+ALTER TABLE report_plans ADD COLUMN IF NOT EXISTS actual_updated_at TIMESTAMPTZ;
 
 -- =============================================
 -- RLS
