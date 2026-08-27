@@ -12,12 +12,12 @@
     .card { background: #12142a; border: 1px solid rgba(255,255,255,0.06); }
     .sep { border-color: rgba(255,255,255,0.06); }
     input[type="date"] { color-scheme: dark; }
-    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
+    input[type="date"]::-webkit-calendar-picker-indicator { display: none !important; }
     .row-hover:hover .del-btn { opacity: 1; }
   </style>
 </head>
 <body class="min-h-screen text-white">
-<main class="max-w-5xl mx-auto px-4 py-6 space-y-4">
+<main class="max-w-screen-xl mx-auto px-4 py-6 space-y-4">
 
   <!-- 헤더 -->
   <header class="flex items-center justify-between">
@@ -62,13 +62,13 @@
 
       <!-- 컬럼 헤더 -->
       <div class="grid grid-cols-2 divide-x sep border-t sep">
-        <div class="grid divide-x sep" style="grid-template-columns: 160px 1fr;">
-          <div class="px-4 py-2 text-xs font-medium text-[#8b93ac]">일자</div>
-          <div class="px-4 py-2 text-xs font-medium text-[#8b93ac]">내용</div>
+        <div class="grid divide-x sep" style="grid-template-columns: 140px 1fr;">
+          <div class="px-4 py-2.5 text-xs font-medium text-[#8b93ac]">일자</div>
+          <div class="px-4 py-2.5 text-xs font-medium text-[#8b93ac]">내용</div>
         </div>
-        <div class="grid divide-x sep" style="grid-template-columns: 160px 1fr 32px;">
-          <div class="px-4 py-2 text-xs font-medium text-[#8b93ac]">일자</div>
-          <div class="px-4 py-2 text-xs font-medium text-[#8b93ac]">내용</div>
+        <div class="grid divide-x sep" style="grid-template-columns: 140px 1fr 36px;">
+          <div class="px-4 py-2.5 text-xs font-medium text-[#8b93ac]">일자</div>
+          <div class="px-4 py-2.5 text-xs font-medium text-[#8b93ac]">내용</div>
           <div></div>
         </div>
       </div>
@@ -209,10 +209,15 @@
     }
     const sorted = [...items].sort((a,b) => a.sort_order - b.sort_order);
     el.innerHTML = sorted.map(p => `
-      <div class="grid divide-x sep" style="grid-template-columns: 160px 1fr;">
-        <div class="px-4 py-3 text-sm text-[#8b93ac] whitespace-nowrap">${toKR(p.plan_date)}</div>
-        <div class="px-4 py-3 text-sm text-white/60">${p.content || '-'}</div>
+      <div class="grid divide-x sep" style="grid-template-columns: 140px 1fr;">
+        <div class="px-4 py-4 text-sm text-[#8b93ac] whitespace-nowrap">${toKR(p.plan_date)}</div>
+        <div class="px-4 py-4 text-sm text-white/60">${p.content || '-'}</div>
       </div>`).join('');
+  }
+
+  function dayLabel(ymd) {
+    if (!ymd) return '';
+    return `(${DAY_KR[new Date(ymd + 'T00:00:00').getDay()]})`;
   }
 
   function renderNextWeek() {
@@ -222,19 +227,20 @@
       return;
     }
     el.innerHTML = plans.map((p, i) => `
-      <div class="grid divide-x sep row-hover" style="grid-template-columns: 160px 1fr 32px;" data-i="${i}">
-        <div class="px-2 py-2">
+      <div class="grid divide-x sep row-hover" style="grid-template-columns: 140px 1fr 36px;" data-i="${i}">
+        <div class="px-3 py-3 flex flex-col justify-center gap-0.5">
           <input type="date" value="${p.plan_date || ''}"
-            class="w-full bg-transparent text-sm text-white px-2 py-1 rounded-lg focus:outline-none focus:bg-white/5 transition"
-            onchange="plans[${i}].plan_date=this.value">
+            class="bg-transparent text-sm text-white rounded-lg focus:outline-none focus:bg-white/5 transition w-full"
+            onchange="plans[${i}].plan_date=this.value; document.querySelector('[data-i=\\'${i}\\'] .day-lbl').textContent=dayLabel(this.value)">
+          <span class="day-lbl text-xs text-[#8b93ac]">${dayLabel(p.plan_date)}</span>
         </div>
-        <div class="px-2 py-2">
+        <div class="px-3 py-3 flex items-center">
           <input type="text" value="${p.content || ''}" placeholder="내용 입력..."
-            class="w-full bg-transparent text-sm text-white px-2 py-1 rounded-lg focus:outline-none focus:bg-white/5 transition placeholder-[#5c6178]"
+            class="w-full bg-transparent text-sm text-white px-2 py-2 rounded-lg focus:outline-none focus:bg-white/5 transition placeholder-[#5c6178]"
             oninput="plans[${i}].content=this.value">
         </div>
         <div class="flex items-center justify-center">
-          <button class="del-btn opacity-0 w-6 h-6 flex items-center justify-center rounded text-[#8b93ac] hover:text-[#fb7185] transition"
+          <button class="del-btn opacity-0 w-7 h-7 flex items-center justify-center rounded text-[#8b93ac] hover:text-[#fb7185] transition"
             onclick="removeRow(${i})">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
