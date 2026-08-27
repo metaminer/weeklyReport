@@ -5,12 +5,14 @@
 
 브라우저에 아무도 접속해 있지 않아도 동작해야 하므로, Supabase Edge Function(서버리스 함수) + 스케줄러 조합으로 구현합니다.
 
-## 1. Resend 가입 및 API 키 발급
+## 1. Gmail 앱 비밀번호 발급
 
-1. https://resend.com 에서 가입합니다.
-2. 대시보드 → API Keys → Create API Key 로 키를 발급받습니다. (`re_...` 형태)
-3. (선택, 실서비스용) Domains 메뉴에서 본인 도메인을 인증하면 `noreply@본인도메인.com` 같은 주소로 발송할 수 있습니다.
-   - 도메인 인증 없이 테스트만 할 경우 `MAIL_FROM=onboarding@resend.dev`로 두면 되지만, 이 경우 **가입한 본인 이메일로만** 발송 테스트가 가능합니다 (Resend 정책).
+발송 전용 Gmail 계정(개인 `@gmail.com` 또는 Google Workspace 계정 모두 가능)을 하나 준비합니다.
+
+1. 그 계정에 [2단계 인증](https://myaccount.google.com/security)을 켭니다 (앱 비밀번호는 2단계 인증이 켜져 있어야 발급 가능).
+2. [Google 계정 → 보안 → 앱 비밀번호](https://myaccount.google.com/apppasswords)에서 새 앱 비밀번호를 발급받습니다 (이름은 아무거나, 예: "주간보고"). 16자리 문자열이 생성됩니다.
+3. 도메인 인증, 사업자등록, 관리자 승인 모두 필요 없습니다.
+4. 발송 한도: 개인 Gmail은 하루 500통, Workspace 계정은 하루 2,000통 — 팀 리마인드 용도로는 충분합니다.
 
 ## 2. Supabase CLI 설치 및 로그인
 
@@ -30,11 +32,13 @@ supabase link --project-ref <프로젝트-ref>
 ## 3. 환경변수(시크릿) 등록
 
 ```bash
-supabase secrets set RESEND_API_KEY=re_xxxxxxxx
-supabase secrets set MAIL_FROM=onboarding@resend.dev
+supabase secrets set GMAIL_USER=yourname@gmail.com
+supabase secrets set GMAIL_APP_PASSWORD=xxxxxxxxxxxxxxxx
 supabase secrets set APP_URL=https://your-app-url.example.com
 supabase secrets set CRON_SECRET=아무렇게나-정한-긴-문자열
 ```
+
+`GMAIL_APP_PASSWORD`는 1번에서 발급받은 16자리 앱 비밀번호를 공백 없이 그대로 넣습니다.
 
 - `CRON_SECRET`은 아무나 함수 URL을 호출해서 메일을 남발하지 못하도록 막는 값입니다. 원하는 임의의 긴 문자열로 정하세요.
 - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`는 Supabase가 자동으로 주입하므로 따로 설정할 필요가 없습니다.
