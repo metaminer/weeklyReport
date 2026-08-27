@@ -13,7 +13,7 @@
     .sep { border-color: rgba(255,255,255,0.06); }
     input[type="date"] { color-scheme: dark; }
     input[type="date"]::-webkit-calendar-picker-indicator { display: none !important; }
-    textarea { line-height: 1.5; }
+    textarea { line-height: 1.5; min-height: calc(1.5em * 4 + 1rem); resize: none; overflow: hidden; }
   </style>
 </head>
 <body class="min-h-screen text-white">
@@ -63,12 +63,12 @@
       <!-- 컬럼 헤더 -->
       <div class="grid grid-cols-2 divide-x sep border-t sep">
         <div class="grid divide-x sep" style="grid-template-columns: 140px 1fr;">
-          <div class="px-4 py-2.5 text-xs font-medium text-[#8b93ac]">일자</div>
-          <div class="px-4 py-2.5 text-xs font-medium text-[#8b93ac]">내용</div>
+          <div class="px-4 py-2.5 text-xs font-medium text-[#8b93ac] text-center">일자</div>
+          <div class="px-4 py-2.5 text-xs font-medium text-[#8b93ac] text-center">내용</div>
         </div>
         <div class="grid divide-x sep" style="grid-template-columns: 140px 1fr;">
-          <div class="px-4 py-2.5 text-xs font-medium text-[#8b93ac]">일자</div>
-          <div class="px-4 py-2.5 text-xs font-medium text-[#8b93ac]">내용</div>
+          <div class="px-4 py-2.5 text-xs font-medium text-[#8b93ac] text-center">일자</div>
+          <div class="px-4 py-2.5 text-xs font-medium text-[#8b93ac] text-center">내용</div>
         </div>
       </div>
 
@@ -243,13 +243,13 @@
           <span class="day-lbl text-sm text-[#8b93ac] ml-1 whitespace-nowrap">${dayLabel(p.plan_date)}</span>
         </div>
         <div class="px-3 py-2 flex items-start">
-          <textarea rows="1" placeholder="내용 입력..."
-            class="w-full bg-transparent text-sm text-white px-2 py-2 rounded-lg focus:outline-none focus:bg-white/5 transition placeholder-[#5c6178] resize-none overflow-hidden"
+          <textarea placeholder="내용 입력..."
+            class="w-full bg-transparent text-sm text-white px-2 py-2 rounded-lg focus:outline-none focus:bg-white/5 transition placeholder-[#5c6178]"
             oninput="plans[${i}].content=this.value; autoResize(this)"
           >${escHtml(p.content)}</textarea>
         </div>
       </div>`).join('');
-    el.querySelectorAll('textarea').forEach(autoResize);
+    el.querySelectorAll('textarea').forEach(t => { t.style.height = 'auto'; t.style.height = Math.max(t.scrollHeight, t.offsetHeight) + 'px'; });
   }
 
   function addRow() {
