@@ -81,11 +81,7 @@
       </div>
 
       <!-- 하단 액션 -->
-      <div class="border-t sep px-5 py-3.5 flex items-center justify-between">
-        <button id="addRowBtn" class="flex items-center gap-1.5 text-sm text-[#7c6cf7] hover:text-[#9d8ffb] transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-          항목 추가
-        </button>
+      <div class="border-t sep px-5 py-3.5 flex items-center justify-end">
         <button id="saveBtn" class="px-6 py-2.5 text-sm font-semibold bg-gradient-to-br from-[#7c6cf7] to-[#4f7cf7] text-white rounded-xl hover:opacity-90 active:scale-95 transition">
           저장
         </button>
@@ -309,7 +305,6 @@
     btn.textContent = '저장'; btn.disabled = false;
   }
 
-  document.getElementById('addRowBtn').addEventListener('click', addRow);
   document.getElementById('saveBtn').addEventListener('click', saveReport);
   document.getElementById('logoutBtn').addEventListener('click', async () => {
     await sb.auth.signOut(); window.location.href = 'login.html';
