@@ -9,6 +9,7 @@
 |---|---|---|
 | [login.html](login.html) | 로그인 / 회원가입 | 전체 |
 | [index.html](index.html) | 내 주간보고 작성 (금주 실적 / 차주 계획) | 전체 |
+| [history.html](history.html) | 내 지난 기록 조회 (주차 이동, 읽기 전용) | 전체 |
 | [team.html](team.html) | 팀 전체 보고 조회, 주차 이동, 엑셀 다운로드 | manager, admin |
 | [admin.html](admin.html) | 사용자 역할 관리, 리마인드 메일 설정, 과거 데이터 정리 | admin |
 
