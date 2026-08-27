@@ -69,36 +69,34 @@
   <!-- 보고서 테이블 -->
   <div class="card rounded-3xl overflow-hidden">
 
-    <!-- 주차 헤더 -->
     <div class="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x sep">
-      <div class="bg-white/3 px-4 sm:px-6 py-3 sm:py-4 text-center">
-        <div class="text-xs text-[#8b93ac] mb-1">금주 실적 <span class="text-[#5c6178]">(읽기 전용)</span></div>
-        <div class="text-sm font-semibold" id="thisWeekRange">-</div>
-      </div>
-      <div class="bg-[#7c6cf7]/10 px-4 sm:px-6 py-3 sm:py-4 text-center">
-        <div class="text-xs text-[#8b93ac] mb-1">차주 계획</div>
-        <div class="text-sm font-semibold" id="nextWeekRange">-</div>
-      </div>
-    </div>
 
-    <!-- 컬럼 헤더 -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x sep border-t sep">
-      <div class="grid grid-cols-[96px_1fr] sm:grid-cols-[140px_1fr] divide-x sep">
-        <div class="px-2 sm:px-4 py-2.5 text-xs font-medium text-[#8b93ac] text-center">일자</div>
-        <div class="px-2 sm:px-4 py-2.5 text-xs font-medium text-[#8b93ac] text-center">내용</div>
-      </div>
-      <div class="grid grid-cols-[96px_1fr] sm:grid-cols-[140px_1fr] divide-x sep">
-        <div class="px-2 sm:px-4 py-2.5 text-xs font-medium text-[#8b93ac] text-center">일자</div>
-        <div class="px-2 sm:px-4 py-2.5 text-xs font-medium text-[#8b93ac] text-center">내용</div>
-      </div>
-    </div>
-
-    <!-- 바디 -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x sep border-t sep min-h-[160px]">
       <!-- 금주 실적 (read-only) -->
-      <div id="thisWeekList" class="divide-y sep"></div>
+      <div>
+        <div class="bg-white/3 px-4 sm:px-6 py-3 sm:py-4 text-center border-b sep">
+          <div class="text-xs text-[#8b93ac] mb-1">금주 실적 <span class="text-[#5c6178]">(읽기 전용)</span></div>
+          <div class="text-sm font-semibold" id="thisWeekRange">-</div>
+        </div>
+        <div class="grid grid-cols-[96px_1fr] sm:grid-cols-[140px_1fr] divide-x sep border-b sep">
+          <div class="px-2 sm:px-4 py-2.5 text-xs font-medium text-[#8b93ac] text-center">일자</div>
+          <div class="px-2 sm:px-4 py-2.5 text-xs font-medium text-[#8b93ac] text-center">내용</div>
+        </div>
+        <div id="thisWeekList" class="divide-y sep min-h-[80px]"></div>
+      </div>
+
       <!-- 차주 계획 (editable) -->
-      <div id="nextWeekList" class="divide-y sep"></div>
+      <div>
+        <div class="bg-[#7c6cf7]/10 px-4 sm:px-6 py-3 sm:py-4 text-center border-b sep">
+          <div class="text-xs text-[#8b93ac] mb-1">차주 계획</div>
+          <div class="text-sm font-semibold" id="nextWeekRange">-</div>
+        </div>
+        <div class="grid grid-cols-[96px_1fr] sm:grid-cols-[140px_1fr] divide-x sep border-b sep">
+          <div class="px-2 sm:px-4 py-2.5 text-xs font-medium text-[#8b93ac] text-center">일자</div>
+          <div class="px-2 sm:px-4 py-2.5 text-xs font-medium text-[#8b93ac] text-center">내용</div>
+        </div>
+        <div id="nextWeekList" class="divide-y sep min-h-[80px]"></div>
+      </div>
+
     </div>
 
     <!-- 하단 액션 -->
