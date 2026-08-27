@@ -37,6 +37,30 @@ function kstNow(): Date {
   return new Date(Date.now() + 9 * 60 * 60 * 1000);
 }
 
+// denomailer의 quoted-printable 인코더가 멀티바이트(한글) 문자 중간에서 줄바꿈을 넣어
+// 본문이 깨지는 버그가 있어(제목과 동일한 문제), 본문은 base64로 직접 인코딩해서 우회한다.
+function toBase64Lines(text: string): string {
+  const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(text)));
+  return b64.replace(/.{1,76}/g, (line) => line + '\r\n').trimEnd();
+}
+
+// 실제 발송되는 리마인드 메일 템플릿 (테스트 발송에서도 동일하게 재사용)
+function reminderEmail(name: string, weekStart: string) {
+  const html = `
+    <p>안녕하세요, ${name}님.</p>
+    <p>이번 주(${weekStart} 시작) 차주 계획이 아직 저장되지 않았습니다.</p>
+    ${APP_URL ? `<p><a href="${APP_URL}">여기를 눌러 작성하러 가기</a></p>` : ''}
+  `;
+  return {
+    subject: '[Weekly Report] Please submit next week\'s plan',
+    mimeContent: [{
+      mimeType: 'text/html; charset="utf-8"',
+      transferEncoding: 'base64',
+      content: toBase64Lines(html),
+    }],
+  };
+}
+
 // KST(UTC+9) 기준 이번 주 월요일(YYYY-MM-DD)을 구한다.
 function thisWeekStartKST(): string {
   const now = kstNow();
@@ -60,7 +84,7 @@ Deno.serve(async (req) => {
   const force = url.searchParams.get('force') === 'true';
   const testEmail = url.searchParams.get('test');
 
-  // ?test=someone@example.com : SMTP 설정만 확인하는 1건짜리 테스트 발송 (대상자 조회 로직을 건너뜀)
+  // ?test=someone@example.com : 실제 리마인드 메일과 동일한 템플릿으로 1건만 테스트 발송 (대상자 조회 로직을 건너뜀)
   if (testEmail) {
     const client = new SMTPClient({
       connection: {
@@ -71,12 +95,8 @@ Deno.serve(async (req) => {
       },
     });
     try {
-      await client.send({
-        from: GMAIL_USER,
-        to: testEmail,
-        subject: '[Weekly Report] Test email',
-        html: '<p>Gmail SMTP 연동 테스트 메일입니다. 이 메일이 보이면 정상 동작 중입니다.</p>',
-      });
+      const { subject, mimeContent } = reminderEmail('테스트', thisWeekStartKST());
+      await client.send({ from: GMAIL_USER, to: testEmail, subject, mimeContent });
       await client.close();
       return json({ ok: true, message: `${testEmail} 로 테스트 메일 발송 완료` });
     } catch (e) {
@@ -147,16 +167,8 @@ Deno.serve(async (req) => {
     }
 
     try {
-      await client.send({
-        from: GMAIL_USER,
-        to: email,
-        subject: '[Weekly Report] Please submit next week\'s plan',
-        html: `
-          <p>안녕하세요, ${m.name}님.</p>
-          <p>이번 주(${weekStart} 시작) 차주 계획이 아직 저장되지 않았습니다.</p>
-          ${APP_URL ? `<p><a href="${APP_URL}">여기를 눌러 작성하러 가기</a></p>` : ''}
-        `,
-      });
+      const { subject, mimeContent } = reminderEmail(m.name, weekStart);
+      await client.send({ from: GMAIL_USER, to: email, subject, mimeContent });
       results.push({ name: m.name, ok: true });
     } catch (e) {
       results.push({ name: m.name, ok: false, reason: String(e) });
