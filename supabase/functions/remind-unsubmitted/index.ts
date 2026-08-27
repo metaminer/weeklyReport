@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
       await client.send({
         from: GMAIL_USER,
         to: testEmail,
-        subject: '[주간보고] 테스트 메일',
+        subject: '[Weekly Report] Test email',
         html: '<p>Gmail SMTP 연동 테스트 메일입니다. 이 메일이 보이면 정상 동작 중입니다.</p>',
       });
       await client.close();
@@ -150,7 +150,7 @@ Deno.serve(async (req) => {
       await client.send({
         from: GMAIL_USER,
         to: email,
-        subject: '[주간보고] 이번 주 차주 계획을 아직 작성하지 않으셨어요',
+        subject: '[Weekly Report] Please submit next week\'s plan',
         html: `
           <p>안녕하세요, ${m.name}님.</p>
           <p>이번 주(${weekStart} 시작) 차주 계획이 아직 저장되지 않았습니다.</p>
