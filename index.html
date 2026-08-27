@@ -115,7 +115,12 @@
     return d;
   }
   function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
-  function toYMD(d) { return d.toISOString().split('T')[0]; }
+  function toYMD(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
   function toKR(ymd) {
     if (!ymd) return '-';
     const d = new Date(ymd + 'T00:00:00');
