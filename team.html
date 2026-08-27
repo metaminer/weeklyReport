@@ -143,6 +143,17 @@
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   const DAY_KR = ['일','월','화','수','목','금','토'];
 
+  // 대한민국 법정공휴일 (대체공휴일 포함, 연도가 바뀌면 갱신 필요)
+  const HOLIDAYS = new Set([
+    '2026-01-01','2026-02-16','2026-02-17','2026-02-18','2026-03-01','2026-03-02',
+    '2026-05-05','2026-05-24','2026-05-25','2026-06-06','2026-07-17','2026-08-15','2026-08-17',
+    '2026-09-24','2026-09-25','2026-09-26','2026-10-03','2026-10-05','2026-10-09','2026-12-25',
+    '2027-01-01','2027-02-06','2027-02-07','2027-02-08','2027-02-09','2027-03-01',
+    '2027-05-05','2027-05-13','2027-06-06','2027-06-07','2027-07-17','2027-08-15','2027-08-16',
+    '2027-09-14','2027-09-15','2027-09-16','2027-10-03','2027-10-04','2027-10-09','2027-10-11','2027-12-25','2027-12-27',
+  ]);
+  function isHoliday(ymd) { return !!ymd && HOLIDAYS.has(ymd); }
+
   function getMonday(date = new Date()) {
     const d = new Date(date);
     const day = d.getDay();
@@ -280,7 +291,7 @@
         return `
         <div>
           <div class="grid grid-cols-[80px_1fr] sm:grid-cols-[150px_1fr] divide-x sep">
-            <div class="px-2 sm:px-4 py-2.5 text-sm text-[#8b93ac] break-words">
+            <div class="px-2 sm:px-4 py-2.5 text-sm ${isHoliday(p.plan_date) ? 'text-red-400' : 'text-[#8b93ac]'} break-words">
               ${toKR(p.plan_date)}
               ${modified ? `<span class="mt-1 block"><span class="inline-block text-[10px] px-1.5 py-0.5 rounded-full bg-amber-400/15 text-amber-300 font-medium">수정됨</span></span>` : ''}
             </div>

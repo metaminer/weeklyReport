@@ -215,6 +215,18 @@
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const DAY_KR = ['일','월','화','수','목','금','토'];
+
+  // 대한민국 법정공휴일 (대체공휴일 포함, 연도가 바뀌면 갱신 필요)
+  const HOLIDAYS = new Set([
+    '2026-01-01','2026-02-16','2026-02-17','2026-02-18','2026-03-01','2026-03-02',
+    '2026-05-05','2026-05-24','2026-05-25','2026-06-06','2026-07-17','2026-08-15','2026-08-17',
+    '2026-09-24','2026-09-25','2026-09-26','2026-10-03','2026-10-05','2026-10-09','2026-12-25',
+    '2027-01-01','2027-02-06','2027-02-07','2027-02-08','2027-02-09','2027-03-01',
+    '2027-05-05','2027-05-13','2027-06-06','2027-06-07','2027-07-17','2027-08-15','2027-08-16',
+    '2027-09-14','2027-09-15','2027-09-16','2027-10-03','2027-10-04','2027-10-09','2027-10-11','2027-12-25','2027-12-27',
+  ]);
+  function isHoliday(ymd) { return !!ymd && HOLIDAYS.has(ymd); }
+
   let currentUser = null;
   let currentReport = null;
   let plans = [];
@@ -340,7 +352,7 @@
       return `
       <div data-ti="${i}">
         <div class="grid grid-cols-[96px_1fr] sm:grid-cols-[140px_1fr] divide-x sep">
-          <div class="px-2 sm:px-4 py-3 text-sm text-[#8b93ac] break-words">
+          <div class="px-2 sm:px-4 py-3 text-sm ${isHoliday(p.plan_date) ? 'text-red-400' : 'text-[#8b93ac]'} break-words">
             ${toKR(p.plan_date)}
             <span id="badge-${i}" class="mt-1 block${modified ? '' : ' hidden'}">
               <span class="inline-block text-[10px] px-1.5 py-0.5 rounded-full bg-amber-400/15 text-amber-300 font-medium">수정됨</span>
@@ -398,6 +410,16 @@
     return `(${DAY_KR[new Date(ymd + 'T00:00:00').getDay()]})`;
   }
 
+  function updateDateHolidayStyle(i) {
+    const row = document.querySelector(`[data-i='${i}']`);
+    if (!row) return;
+    const holiday = isHoliday(plans[i].plan_date);
+    row.querySelector('input[type="date"]').classList.toggle('text-red-400', holiday);
+    row.querySelector('input[type="date"]').classList.toggle('text-white', !holiday);
+    row.querySelector('.day-lbl').classList.toggle('text-red-400', holiday);
+    row.querySelector('.day-lbl').classList.toggle('text-[#8b93ac]', !holiday);
+  }
+
   function autoResize(el) {
     el.style.height = 'auto';
     el.style.height = el.scrollHeight + 'px';
@@ -424,9 +446,9 @@
       <div class="grid grid-cols-[96px_1fr] sm:grid-cols-[140px_1fr] divide-x sep" data-i="${i}">
         <div class="px-1.5 sm:px-3 py-3 flex items-center">
           <input type="date" value="${p.plan_date || ''}"
-            class="bg-transparent text-sm text-white rounded-lg focus:outline-none focus:bg-white/5 transition w-full min-w-0"
-            onchange="plans[${i}].plan_date=this.value; document.querySelector('[data-i=\\'${i}\\'] .day-lbl').textContent=dayLabel(this.value)">
-          <span class="day-lbl text-sm text-[#8b93ac] ml-1 whitespace-nowrap">${dayLabel(p.plan_date)}</span>
+            class="bg-transparent text-sm ${isHoliday(p.plan_date) ? 'text-red-400' : 'text-white'} rounded-lg focus:outline-none focus:bg-white/5 transition w-full min-w-0"
+            onchange="plans[${i}].plan_date=this.value; document.querySelector('[data-i=\\'${i}\\'] .day-lbl').textContent=dayLabel(this.value); updateDateHolidayStyle(${i})">
+          <span class="day-lbl text-sm ${isHoliday(p.plan_date) ? 'text-red-400' : 'text-[#8b93ac]'} ml-1 whitespace-nowrap">${dayLabel(p.plan_date)}</span>
         </div>
         <div class="px-2 sm:px-3 py-2 flex items-start gap-1 sm:gap-2">
           <textarea placeholder="내용 입력 (Markdown 지원)..."
