@@ -56,7 +56,35 @@ Deno.serve(async (req) => {
     }
   }
 
-  const force = new URL(req.url).searchParams.get('force') === 'true';
+  const url = new URL(req.url);
+  const force = url.searchParams.get('force') === 'true';
+  const testEmail = url.searchParams.get('test');
+
+  // ?test=someone@example.com : SMTP 설정만 확인하는 1건짜리 테스트 발송 (대상자 조회 로직을 건너뜀)
+  if (testEmail) {
+    const client = new SMTPClient({
+      connection: {
+        hostname: 'smtp.gmail.com',
+        port: 465,
+        tls: true,
+        auth: { username: GMAIL_USER, password: GMAIL_APP_PASSWORD },
+      },
+    });
+    try {
+      await client.send({
+        from: GMAIL_USER,
+        to: testEmail,
+        subject: '[주간보고] 테스트 메일',
+        html: '<p>Gmail SMTP 연동 테스트 메일입니다. 이 메일이 보이면 정상 동작 중입니다.</p>',
+      });
+      await client.close();
+      return json({ ok: true, message: `${testEmail} 로 테스트 메일 발송 완료` });
+    } catch (e) {
+      await client.close().catch(() => {});
+      return json({ ok: false, error: String(e) }, 500);
+    }
+  }
+
   const sb = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
   const weekStart = thisWeekStartKST();
 
