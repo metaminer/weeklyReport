@@ -23,7 +23,6 @@
     .md-body a { color: #9d8ffb; }
     .md-body hr { border-color: rgba(255,255,255,0.06); }
     .md-body strong { font-weight: 700; }
-    .preview-box { border-top: 1px solid rgba(255,255,255,0.06); padding: 0.5em; font-size: 0.875em; color: rgba(255,255,255,0.6); min-height: 2em; }
     input[type="date"] { color-scheme: dark; }
     input[type="date"]::-webkit-calendar-picker-indicator { display: none !important; }
     textarea { line-height: 1.5; min-height: calc(1.5em * 4 + 1rem); resize: none; overflow: hidden; }
@@ -107,6 +106,21 @@
   </div>
 
 </main>
+
+<!-- Markdown 미리보기 모달 -->
+<div id="previewModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden p-4">
+  <div class="card rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl">
+    <div class="flex items-center justify-between px-6 py-5 border-b sep sticky top-0 card">
+      <h3 id="previewTitle" class="text-base font-bold"></h3>
+      <button onclick="closePreviewModal()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition">
+        <svg class="w-4 h-4 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="px-6 py-5">
+      <div id="previewContent" class="text-sm text-white/80 md-body"></div>
+    </div>
+  </div>
+</div>
 
 <!-- Markdown 가이드 모달 -->
 <div id="guideModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden p-4">
@@ -296,10 +310,15 @@
     el.style.height = el.scrollHeight + 'px';
   }
 
-  function updatePreview(i) {
-    const preview = document.querySelector(`[data-i='${i}'] .preview-box`);
-    if (!preview) return;
-    preview.innerHTML = renderMd(plans[i].content);
+  function openPreviewModal(i) {
+    const p = plans[i];
+    document.getElementById('previewTitle').textContent = `${toKR(p.plan_date)} — 미리보기`;
+    document.getElementById('previewContent').innerHTML = renderMd(p.content);
+    document.getElementById('previewModal').classList.remove('hidden');
+  }
+
+  function closePreviewModal() {
+    document.getElementById('previewModal').classList.add('hidden');
   }
 
   function renderNextWeek() {
@@ -316,12 +335,15 @@
             onchange="plans[${i}].plan_date=this.value; document.querySelector('[data-i=\\'${i}\\'] .day-lbl').textContent=dayLabel(this.value)">
           <span class="day-lbl text-sm text-[#8b93ac] ml-1 whitespace-nowrap">${dayLabel(p.plan_date)}</span>
         </div>
-        <div class="px-3 py-2 flex flex-col items-start">
+        <div class="px-3 py-2 flex items-start gap-2">
           <textarea placeholder="내용 입력 (Markdown 지원)..."
             class="w-full bg-transparent text-sm text-white px-2 py-2 rounded-lg focus:outline-none focus:bg-white/5 transition placeholder-[#5c6178]"
-            oninput="plans[${i}].content=this.value; autoResize(this); updatePreview(${i})"
+            oninput="plans[${i}].content=this.value; autoResize(this)"
           >${escHtml(p.content)}</textarea>
-          <div class="preview-box w-full md-body prose-sm">${renderMd(p.content)}</div>
+          <button type="button" onclick="openPreviewModal(${i})"
+            class="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/10 transition text-[#8b93ac] hover:text-white" title="미리보기">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+          </button>
         </div>
       </div>`).join('');
     el.querySelectorAll('textarea').forEach(t => { t.style.height = 'auto'; t.style.height = Math.max(t.scrollHeight, t.offsetHeight) + 'px'; });
