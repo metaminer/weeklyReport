@@ -126,12 +126,17 @@
 
 <!-- Markdown 미리보기 모달 -->
 <div id="previewModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden p-4">
-  <div class="card rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl">
+  <div id="previewBox" class="card rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl transition-all">
     <div class="flex items-center justify-between px-6 py-5 border-b sep sticky top-0 card">
       <h3 id="previewTitle" class="text-base font-bold"></h3>
-      <button onclick="closePreviewModal()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition">
-        <svg class="w-4 h-4 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
+      <div class="flex items-center gap-1">
+        <button id="previewExpandBtn" onclick="togglePreviewExpand()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition" title="크게 보기">
+          <svg id="previewExpandIcon" class="w-4 h-4 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4"/></svg>
+        </button>
+        <button onclick="closePreviewModal()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 transition">
+          <svg class="w-4 h-4 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
     </div>
     <div class="px-6 py-5">
       <div id="previewContent" class="text-sm text-white/80 md-body"></div>
@@ -395,6 +400,7 @@
     const p = thisWeekItems[i];
     document.getElementById('previewTitle').textContent = `${toKR(p.plan_date)} — 미리보기`;
     document.getElementById('previewContent').innerHTML = renderMd(p._draft);
+    resetPreviewSize();
     document.getElementById('previewModal').classList.remove('hidden');
   }
 
@@ -426,11 +432,36 @@
     const p = plans[i];
     document.getElementById('previewTitle').textContent = `${toKR(p.plan_date)} — 미리보기`;
     document.getElementById('previewContent').innerHTML = renderMd(p.content);
+    resetPreviewSize();
     document.getElementById('previewModal').classList.remove('hidden');
   }
 
   function closePreviewModal() {
     document.getElementById('previewModal').classList.add('hidden');
+  }
+
+  const PREVIEW_NORMAL = ['max-w-2xl', 'max-h-[85vh]'];
+  const PREVIEW_EXPANDED = ['max-w-[95vw]', 'w-[95vw]', 'max-h-[95vh]', 'h-[95vh]'];
+  const PREVIEW_EXPAND_ICON = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4"/>';
+  const PREVIEW_RESTORE_ICON = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V5H5M15 9V5h4M9 15v4H5m10-4v4h4"/>';
+  let previewExpanded = false;
+
+  function resetPreviewSize() {
+    previewExpanded = false;
+    const box = document.getElementById('previewBox');
+    box.classList.remove(...PREVIEW_EXPANDED);
+    box.classList.add(...PREVIEW_NORMAL);
+    document.getElementById('previewExpandBtn').title = '크게 보기';
+    document.getElementById('previewExpandIcon').innerHTML = PREVIEW_EXPAND_ICON;
+  }
+
+  function togglePreviewExpand() {
+    previewExpanded = !previewExpanded;
+    const box = document.getElementById('previewBox');
+    box.classList.remove(...(previewExpanded ? PREVIEW_NORMAL : PREVIEW_EXPANDED));
+    box.classList.add(...(previewExpanded ? PREVIEW_EXPANDED : PREVIEW_NORMAL));
+    document.getElementById('previewExpandBtn').title = previewExpanded ? '원래 크기로' : '크게 보기';
+    document.getElementById('previewExpandIcon').innerHTML = previewExpanded ? PREVIEW_RESTORE_ICON : PREVIEW_EXPAND_ICON;
   }
 
   function renderNextWeek() {
