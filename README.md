@@ -10,7 +10,7 @@
 | [login.html](login.html) | 로그인 / 회원가입 | 전체 |
 | [index.html](index.html) | 내 주간보고 작성 (금주 실적 / 차주 계획) | 전체 |
 | [history.html](history.html) | 내 지난 기록 조회 (주차 이동, 읽기 전용) | 전체 |
-| [team.html](team.html) | 팀 전체 보고 조회, 주차 이동, 엑셀 다운로드 | manager, admin |
+| [team.html](team.html) | 팀 전체 보고 조회, 주차 이동, PDF 다운로드 | manager, admin |
 | [admin.html](admin.html) | 사용자 역할 관리, 리마인드 메일 설정, 과거 데이터 정리 | admin |
 
 ## 주요 기능
@@ -18,7 +18,7 @@
 - **금주 실적 / 차주 계획**: 지난주에 세운 계획이 "금주 실적"으로 자동 표시됩니다. 실제 수행 내용이 계획과 다르면 직접 수정할 수 있고, 수정된 항목은 "수정됨" 배지와 함께 원본 계획과 비교해 볼 수 있습니다 (`report_plans.actual_content`).
 - **Markdown 지원**: 계획/실적 내용은 마크다운으로 작성하고 미리보기로 확인할 수 있습니다 ([marked.js](https://marked.js.org)).
 - **법정공휴일 표시**: [Nager.Date](https://date.nager.at) 공휴일 API로 해당 날짜를 빨간색으로 표시합니다 (오프라인/실패 시 하드코딩된 목록으로 대체, [js/holidays.js](js/holidays.js)).
-- **팀 조회 & 엑셀 다운로드**: 매니저/관리자는 팀원별 보고를 주차별로 조회하고, 팀원 1명당 시트 1개로 구성된 `.xlsx` 파일로 내려받을 수 있습니다.
+- **팀 조회 & PDF 다운로드**: 매니저/관리자는 팀원별 보고를 주차별로 조회하고, 마크다운 서식(굵게·목록·표)이 그대로 살아있는 PDF로 내려받을 수 있습니다 (브라우저 인쇄 → PDF로 저장).
 - **역할 관리**: 관리자는 팀원의 이름/역할(팀원·관리자·시스템관리자)을 변경할 수 있습니다.
 - **사용자 삭제**: 관리자는 계정을 완전히 삭제할 수 있으며, 그 사용자의 모든 주간보고 데이터도 함께 삭제됩니다 (`supabase/functions/delete-user`).
 - **미작성자 리마인드 메일** (선택 기능): 관리자가 설정한 요일/시각에 아직 작성하지 않은 팀원에게 자동으로 메일을 보냅니다. 별도 설정이 필요합니다 — [docs/email-reminder-setup.md](docs/email-reminder-setup.md) 참고.
@@ -29,9 +29,8 @@
 - 순수 HTML/JS + [Tailwind CDN](https://tailwindcss.com) (빌드 과정 없음)
 - [Supabase](https://supabase.com): Postgres DB, Auth, Edge Functions
 - [marked.js](https://marked.js.org): 마크다운 렌더링
-- [SheetJS(xlsx)](https://sheetjs.com): 엑셀 내보내기
 - [Nager.Date](https://date.nager.at): 공휴일 조회 (무료, 키 불필요)
-- [Resend](https://resend.com): 리마인드 메일 발송 (선택 기능)
+- Gmail SMTP ([denomailer](https://deno.land/x/denomailer)): 리마인드 메일 발송 (선택 기능)
 
 ## 초기 설정
 
@@ -49,5 +48,5 @@
 
 ## 선택 기능: 미작성자 리마인드 메일
 
-Resend + Supabase Edge Function + pg_cron으로 동작하며, 별도 가입/배포가 필요합니다.
+Gmail SMTP + Supabase Edge Function + pg_cron으로 동작하며, 별도 가입/배포가 필요합니다.
 자세한 절차는 [docs/email-reminder-setup.md](docs/email-reminder-setup.md)를 참고하세요.
