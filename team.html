@@ -10,9 +10,11 @@
   <script src="js/holidays.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked@14/marked.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     body { background: #0a0c18; }
+    @media print {
+      body { background: #fff !important; }
+    }
     .card { background: #12142a; border: 1px solid rgba(255,255,255,0.06); }
     .sep { border-color: rgba(255,255,255,0.06); }
     .md-body h1 { margin: 0.5em 0 0.25em; font-weight: 700; font-size: 1.5em; }
@@ -46,7 +48,7 @@
   </style>
 </head>
 <body class="min-h-screen text-white">
-<main class="max-w-5xl mx-auto px-4 py-6 space-y-4">
+<main class="max-w-5xl mx-auto px-4 py-6 space-y-4 print:hidden">
 
   <!-- 헤더 -->
   <header class="flex items-center justify-between gap-2">
@@ -58,8 +60,8 @@
       </div>
     </div>
     <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-      <button id="exportBtn" class="w-9 h-9 sm:w-11 sm:h-11 rounded-full card flex items-center justify-center hover:bg-white/5 transition" title="엑셀 다운로드">
-        <svg class="w-5 h-5 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2-9H8a2 2 0 00-2 2v14a2 2 0 002 2h8a2 2 0 002-2V8l-5-5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 3v5h5"/></svg>
+      <button id="exportBtn" class="w-9 h-9 sm:w-11 sm:h-11 rounded-full card flex items-center justify-center hover:bg-white/5 transition" title="PDF 다운로드">
+        <svg class="w-5 h-5 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17h6m-6-4h6m-7 8h8a2 2 0 002-2V7l-5-5H6a2 2 0 00-2 2v14a2 2 0 002 2z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 2v5h5"/></svg>
       </button>
       <a href="index.html" class="w-9 h-9 sm:w-11 sm:h-11 rounded-full card flex items-center justify-center hover:bg-white/5 transition" title="내 보고서">
         <svg class="w-5 h-5 text-[#8b93ac]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -95,7 +97,7 @@
 </main>
 
 <!-- 보고서 상세 모달 -->
-<div id="modal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden p-4">
+<div id="modal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden p-4 print:hidden">
   <div id="modalBox" class="card rounded-3xl shadow-2xl overflow-hidden flex flex-col" style="width:900px;height:80vh;max-width:calc(100vw - 2rem);max-height:calc(100vh - 2rem);min-width:min(480px, calc(100vw - 2rem));min-height:300px;position:relative;">
     <!-- 리사이즈 핸들 -->
     <div class="rz rz-n"></div><div class="rz rz-s"></div><div class="rz rz-e"></div><div class="rz rz-w"></div>
@@ -143,6 +145,9 @@
     </div>
   </div>
 </div>
+
+<!-- PDF 인쇄 전용 영역 (화면에는 안 보이고, 인쇄/PDF 저장 시에만 표시됨) -->
+<div id="printArea" class="hidden print:block" style="color:#111; background:#fff;"></div>
 
 <script>
   const { createClient } = supabase;
@@ -328,74 +333,61 @@
     document.getElementById('modal').classList.add('hidden');
   }
 
-  // 엑셀 시트 이름 제약(31자, \/?*[]: 금지) 처리 + 중복 이름 구분
-  function makeSheetName(name, usedNames) {
-    let base = (name || '이름없음').replace(/[\\/?*\[\]:]/g, '').slice(0, 31) || '이름없음';
-    let candidate = base;
-    let n = 2;
-    while (usedNames.has(candidate)) {
-      const suffix = `(${n})`;
-      candidate = base.slice(0, 31 - suffix.length) + suffix;
-      n++;
-    }
-    usedNames.add(candidate);
-    return candidate;
+  // 마크다운 서식(굵게, 목록, 표 등)이 살아있는 인쇄용 행 HTML
+  function printRow(p, isActual) {
+    const modified = isActual && p.actual_content != null && p.actual_content.trim() !== (p.content || '').trim();
+    const shown = modified ? p.actual_content : p.content;
+    return `
+      <tr>
+        <td style="border:1px solid #ccc;padding:6px 10px;font-size:11px;white-space:nowrap;vertical-align:top;color:#333;">${toKR(p.plan_date)}</td>
+        <td style="border:1px solid #ccc;padding:6px 10px;font-size:12px;color:#111;">
+          ${renderMd(shown)}
+          ${modified ? `<div style="margin-top:6px;font-size:10.5px;color:#777;border-top:1px dashed #ccc;padding-top:4px;"><strong>원래 계획:</strong> ${renderMd(p.content)}</div>` : ''}
+        </td>
+      </tr>`;
   }
 
-  function memberRows(m) {
+  function printSection(title, plans, isActual) {
+    return `
+      <h3 style="font-size:12px;font-weight:700;margin:10px 0 4px;color:#333;">${title}</h3>
+      ${plans.length
+        ? `<table style="width:100%;border-collapse:collapse;margin-bottom:6px;">${plans.map(p => printRow(p, isActual)).join('')}</table>`
+        : `<p style="font-size:12px;color:#999;margin-bottom:6px;">작성 없음</p>`}
+    `;
+  }
+
+  function memberPrintSection(m) {
     const thisReport = cachedReports.find(r => r.user_id === m.id && r.week_start === cachedMondayStr);
     const lastReport = cachedReports.find(r => r.user_id === m.id && r.week_start === cachedLastMondayStr);
 
     const thisPlans = (lastReport?.report_plans || []).sort((a, b) => a.sort_order - b.sort_order); // 금주 실적
     const nextPlans = (thisReport?.report_plans || []).sort((a, b) => a.sort_order - b.sort_order); // 차주 계획
 
-    const rows = [];
-    thisPlans.forEach(p => {
-      const modified = p.actual_content != null && p.actual_content.trim() !== (p.content || '').trim();
-      rows.push({
-        '구분': '금주 실적',
-        '일자': p.plan_date || '',
-        '요일': p.plan_date ? DAY_KR[new Date(p.plan_date + 'T00:00:00').getDay()] : '',
-        '내용': (modified ? p.actual_content : p.content) || '',
-        '수정여부': modified ? '수정됨' : '',
-        '원래계획': modified ? (p.content || '') : '',
-      });
-    });
-    nextPlans.forEach(p => {
-      rows.push({
-        '구분': '차주 계획',
-        '일자': p.plan_date || '',
-        '요일': p.plan_date ? DAY_KR[new Date(p.plan_date + 'T00:00:00').getDay()] : '',
-        '내용': p.content || '',
-        '수정여부': '',
-        '원래계획': '',
-      });
-    });
-    if (!rows.length) {
-      rows.push({ '구분': '-', '일자': '', '요일': '', '내용': '(작성 없음)', '수정여부': '', '원래계획': '' });
-    }
-    return rows;
+    return `
+      <div style="page-break-inside:avoid;margin-bottom:20px;">
+        <h2 style="font-size:14px;font-weight:700;border-bottom:2px solid #333;padding-bottom:4px;color:#111;">${m.name}</h2>
+        ${printSection('금주 실적', thisPlans, true)}
+        ${printSection('차주 계획', nextPlans, false)}
+      </div>`;
   }
 
-  function exportExcel() {
+  function exportPDF() {
     if (!cachedMembers.length) {
       alert('내보낼 팀원 데이터가 없습니다.');
       return;
     }
 
-    const wb = XLSX.utils.book_new();
-    const usedNames = new Set();
+    document.getElementById('printArea').innerHTML = `
+      <div style="max-width:800px;margin:0 auto;font-family:sans-serif;">
+        <h1 style="font-size:18px;font-weight:700;margin-bottom:2px;color:#111;">팀 주간보고</h1>
+        <p style="font-size:11px;color:#666;margin-bottom:20px;">${weekRange(viewMonday)}</p>
+        ${cachedMembers.map(m => memberPrintSection(m)).join('')}
+      </div>`;
 
-    for (const m of cachedMembers) {
-      const ws = XLSX.utils.json_to_sheet(memberRows(m));
-      ws['!cols'] = [{ wch: 10 }, { wch: 12 }, { wch: 6 }, { wch: 60 }, { wch: 8 }, { wch: 60 }];
-      XLSX.utils.book_append_sheet(wb, ws, makeSheetName(m.name, usedNames));
-    }
-
-    XLSX.writeFile(wb, `팀주간보고_${cachedMondayStr}.xlsx`);
+    window.print();
   }
 
-  document.getElementById('exportBtn').addEventListener('click', exportExcel);
+  document.getElementById('exportBtn').addEventListener('click', exportPDF);
 
   document.getElementById('modal').addEventListener('click', e => {
     if (e.target === document.getElementById('modal') && !wasResizing) closeModal();
