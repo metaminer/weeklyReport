@@ -241,7 +241,9 @@
 
     el.innerHTML = members.map(m => {
       const thisReport = reports?.find(r => r.user_id === m.id && r.week_start === mondayStr);
-      const saved = thisReport?.saved_at;
+      // 저장 버튼을 눌렀어도 차주 계획에 실제 내용이 하나도 없으면 "작성완료"로 보지 않는다
+      const hasPlan = (thisReport?.report_plans || []).some(p => (p.content || '').trim());
+      const saved = hasPlan ? thisReport?.saved_at : null;
       return `
         <div class="card rounded-2xl px-5 py-4 flex items-center justify-between cursor-pointer hover:bg-white/3 transition"
              onclick="openModal('${m.id}', '${m.name}', '${mondayStr}', '${lastMondayStr}')">
@@ -280,7 +282,8 @@
     const thisReport = reports?.find(r => r.week_start === mondayStr);
     const lastReport = reports?.find(r => r.week_start === lastMondayStr);
 
-    document.getElementById('modalSavedAt').textContent = thisReport?.saved_at ? `저장: ${formatDT(thisReport.saved_at)}` : '미작성';
+    const thisReportHasPlan = (thisReport?.report_plans || []).some(p => (p.content || '').trim());
+    document.getElementById('modalSavedAt').textContent = (thisReportHasPlan && thisReport?.saved_at) ? `저장: ${formatDT(thisReport.saved_at)}` : '미작성';
 
     const thisPlans = (lastReport?.report_plans || []).sort((a,b) => a.sort_order - b.sort_order);
     const nextPlans = (thisReport?.report_plans || []).sort((a,b) => a.sort_order - b.sort_order);
